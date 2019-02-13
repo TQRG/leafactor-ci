@@ -1,9 +1,7 @@
 package rules;
 
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
@@ -15,7 +13,6 @@ import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinte
 import utility.Color;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,6 +20,10 @@ import java.util.stream.Stream;
  * Refactoring rule that undoes the Recycle anti-pattern
  */
 public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
+
+    // List of classes that need to be recycled
+    private List<String> opportunities = List.of("TypedArray", "Bitmap");
+
     /**
      * Find the TypedArray/Bitmap variable declaration
      * @param methodDeclaration The root method declaration
@@ -37,8 +38,7 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
                         .filter(ClassOrInterfaceType.class::isInstance)
                         .map(element -> (ClassOrInterfaceType) element)
                         .map(ClassOrInterfaceType::getName)
-                        .anyMatch(simpleName -> simpleName.getIdentifier().equals("TypedArray")
-                                || simpleName.getIdentifier().equals("Bitmap")), VariableDeclarator.class);
+                        .anyMatch(simpleName -> opportunities.contains(simpleName.getIdentifier())), VariableDeclarator.class);
     }
 
     /**
@@ -65,52 +65,61 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
     }
 
     private Statement createRecycleExpression(int tabs, String variableName) {
-        String baseTabPadding = "\t";
+        String tab = "    ";
+        String baseTabPadding = tabs > 0 ? "  " : "";
         for(int i = 1; i < tabs; i++) {
             baseTabPadding += baseTabPadding;
         }
         return LexicalPreservingPrinter.setup(
                 JavaParser.parseStatement(
                         String.format(
-                                "if(%s != null) {\n" +
-                                        baseTabPadding + "\t%s.recycle();\n" +
-                                        baseTabPadding + "}\n",
+                                System.getProperty("line.separator") +
+                                "if(%s != null) {" + System.getProperty("line.separator") +
+                                        baseTabPadding + tab + "%s.recycle();" + System.getProperty("line.separator") +
+                                        baseTabPadding + "}",
                                 variableName,
                                 variableName)));
     }
 
+    private void refactor(MethodDeclaration methodDeclaration, List<VariableDeclarator> variableDeclaratorsWithoutRecycle) {
+        variableDeclaratorsWithoutRecycle
+                .forEach((declaration)-> {
+                    methodDeclaration.getBody()
+                            .ifPresent(blockStmt -> {
+                                blockStmt.addStatement(
+                                        createRecycleExpression(3, declaration.getName().getIdentifier()));
+                            });
+                });
+    }
+
+
     @Override
     public void visit(MethodDeclaration methodDeclaration, Void arg) {
-
-//        Optional<Node> parentOptional = methodDeclaration.getParentNode();
-//        if(parentOptional.isPresent()) {
-//            Node parent = parentOptional.get();
-//            System.out.print(Color.BLUE);
-//            System.out.println("DECLARATION: \n" + parent);
-//            System.out.println("TOKEN RANGE: \n" + parent.getTokenRange());
-//            System.out.print(Color.RESET);
-//        }
 
         List<VariableDeclarator> variableDeclaratorsWithoutRecycle = findVariableDeclaratorNodes(methodDeclaration)
                 .stream()
                 // Find the variable declarations that do not have a corresponding recycle method
                 .filter((variable) -> !hasRecycle(methodDeclaration, variable))
                 .collect(Collectors.toList());
-        System.out.println("[RECYCLE_PATTERN]Found variable Declarators without Recycle: \n > " + variableDeclaratorsWithoutRecycle);
+
         if(variableDeclaratorsWithoutRecycle.size() > 0) {
-            System.out.println("[RECYCLE_PATTERN]POSSIBILITIES FOR REFACTORING: " + variableDeclaratorsWithoutRecycle.size());
+            System.out.println(Color.RED);
+            System.out.println("[RECYCLE_PATTERN] Found variable declarations with no matching recycle call: \n > " + variableDeclaratorsWithoutRecycle);
+            System.out.println("[RECYCLE_PATTERN] Possibilities for refactoring: " + variableDeclaratorsWithoutRecycle.size());
+            System.out.println(Color.RESET);
             // We have reached a condition for refactoring
-            variableDeclaratorsWithoutRecycle
-                    .forEach((declaration)-> {
-                        methodDeclaration.getBody()
-                                .ifPresent(blockStmt -> {
-                                    blockStmt.addStatement(
-                                            createRecycleExpression(2, declaration.getName().getIdentifier()));
-                                });
-                    });
-            // todo - check if the control flow for a particular method with a TypedArray/Bitmap always lead to a recycle call
-            // todo - add the call to recycle for every variable declaration that does not have a recycle call
-            // todo - detect lambda expressions (LambdaExpr) Note: use findOuterNodeOfInterest with outer predicate LambdaExpr
+            refactor(methodDeclaration, variableDeclaratorsWithoutRecycle);
+            // Todo - Check if the control flow for a particular method with a TypedArray/Bitmap always lead to a recycle call.
+            // Todo - Add the call to recycle for every variable declaration that does not have a recycle call.
+            // Todo - Detect lambda expressions (LambdaExpr) Note: use findOuterNodeOfInterest with outer predicate LambdaExpr.
+            // Todo - Are there other objects other than the TypedArray and Bitmap?
+            // Todo - What if the variable is sent to another method (possibly outside the current file)?
+            // Todo - What if the return value of the method is used directly without reaching for a new variable.
+            // Todo - Tabs over spaces (for now we use spaces)
+        } else {
+            System.out.println(Color.GREEN);
+            System.out.println("[RECYCLE_PATTERN] No Refactoring opportunities found.");
+            System.out.println(Color.RESET);
         }
         super.visit(methodDeclaration, arg);
     }
