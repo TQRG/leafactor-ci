@@ -1,14 +1,21 @@
 package rules;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
+import utility.Color;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,8 +64,33 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
                         }));
     }
 
+    private Statement createRecycleExpression(int tabs, String variableName) {
+        String baseTabPadding = "\t";
+        for(int i = 1; i < tabs; i++) {
+            baseTabPadding += baseTabPadding;
+        }
+        return LexicalPreservingPrinter.setup(
+                JavaParser.parseStatement(
+                        String.format(
+                                "if(%s != null) {\n" +
+                                        baseTabPadding + "\t%s.recycle();\n" +
+                                        baseTabPadding + "}\n",
+                                variableName,
+                                variableName)));
+    }
+
     @Override
     public void visit(MethodDeclaration methodDeclaration, Void arg) {
+
+//        Optional<Node> parentOptional = methodDeclaration.getParentNode();
+//        if(parentOptional.isPresent()) {
+//            Node parent = parentOptional.get();
+//            System.out.print(Color.BLUE);
+//            System.out.println("DECLARATION: \n" + parent);
+//            System.out.println("TOKEN RANGE: \n" + parent.getTokenRange());
+//            System.out.print(Color.RESET);
+//        }
+
         List<VariableDeclarator> variableDeclaratorsWithoutRecycle = findVariableDeclaratorNodes(methodDeclaration)
                 .stream()
                 // Find the variable declarations that do not have a corresponding recycle method
@@ -67,9 +99,19 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
         System.out.println("[RECYCLE_PATTERN]Found variable Declarators without Recycle: \n > " + variableDeclaratorsWithoutRecycle);
         if(variableDeclaratorsWithoutRecycle.size() > 0) {
             System.out.println("[RECYCLE_PATTERN]POSSIBILITIES FOR REFACTORING: " + variableDeclaratorsWithoutRecycle.size());
+            // We have reached a condition for refactoring
+            variableDeclaratorsWithoutRecycle
+                    .forEach((declaration)-> {
+                        methodDeclaration.getBody()
+                                .ifPresent(blockStmt -> {
+                                    blockStmt.addStatement(
+                                            createRecycleExpression(2, declaration.getName().getIdentifier()));
+                                });
+                    });
+            // todo - check if the control flow for a particular method with a TypedArray/Bitmap always lead to a recycle call
+            // todo - add the call to recycle for every variable declaration that does not have a recycle call
+            // todo - detect lambda expressions (LambdaExpr) Note: use findOuterNodeOfInterest with outer predicate LambdaExpr
         }
-        // todo - check if the control flow for a particular method with a TypedArray/Bitmap always lead to a recycle call
-        // todo - add the call to recycle for every variable declaration that does not have a recycle call
         super.visit(methodDeclaration, arg);
     }
 

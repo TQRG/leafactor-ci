@@ -1,3 +1,4 @@
+import engine.CompilationUnitGroup;
 import rules.RecycleRefactoringRule;
 import rules.RefactoringRule;
 
@@ -14,7 +15,6 @@ public class Main {
         refactoringRules.add(new RecycleRefactoringRule());
         URL url = Main.class.getResource("./samples/recycle/recycle1");
         File directory = Paths.get(url.toURI()).toFile();
-        System.out.println("Absolute path: " + directory.getAbsolutePath());
         CompilationUnitGroup group = new CompilationUnitGroup(directory);
         group.run(refactoringRules);
         group.printYaml();
