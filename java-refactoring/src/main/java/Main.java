@@ -1,6 +1,6 @@
 import engine.CompilationUnitGroup;
 import rules.RecycleRefactoringRule;
-import rules.RefactoringRule;
+import engine.RefactoringRule;
 
 import java.io.*;
 import java.net.URISyntaxException;

@@ -10,6 +10,7 @@ import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
+import engine.RefactoringRule;
 import utility.Color;
 
 import java.util.List;
@@ -42,10 +43,10 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
     }
 
     /**
-     * Find the recycle call within the method and check if its called on the given declared variable
+     * Find the RecycleRefactoringRule call within the method and check if its called on the given declared variable
      * @param methodDeclaration The method declaration function
      * @param variableDeclarator The variable declaration
-     * @return True if there is a matching recycle method call false otherwise
+     * @return True if there is a matching RecycleRefactoringRule method call false otherwise
      */
     private boolean hasRecycle(MethodDeclaration methodDeclaration, VariableDeclarator variableDeclarator) {
         return RefactoringRule.hasNodeOfInterest(methodDeclaration,
@@ -98,19 +99,19 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
 
         List<VariableDeclarator> variableDeclaratorsWithoutRecycle = findVariableDeclaratorNodes(methodDeclaration)
                 .stream()
-                // Find the variable declarations that do not have a corresponding recycle method
+                // Find the variable declarations that do not have a corresponding RecycleRefactoringRule method
                 .filter((variable) -> !hasRecycle(methodDeclaration, variable))
                 .collect(Collectors.toList());
 
         if(variableDeclaratorsWithoutRecycle.size() > 0) {
             System.out.println(Color.RED);
-            System.out.println("[RECYCLE_PATTERN] Found variable declarations with no matching recycle call: \n > " + variableDeclaratorsWithoutRecycle);
+            System.out.println("[RECYCLE_PATTERN] Found variable declarations with no matching RecycleRefactoringRule call: \n > " + variableDeclaratorsWithoutRecycle);
             System.out.println("[RECYCLE_PATTERN] Possibilities for refactoring: " + variableDeclaratorsWithoutRecycle.size());
             System.out.println(Color.RESET);
             // We have reached a condition for refactoring
             refactor(methodDeclaration, variableDeclaratorsWithoutRecycle);
-            // Todo - Check if the control flow for a particular method with a TypedArray/Bitmap always lead to a recycle call.
-            // Todo - Add the call to recycle for every variable declaration that does not have a recycle call.
+            // Todo - Check if the control flow for a particular method with a TypedArray/Bitmap always lead to a RecycleRefactoringRule call.
+            // Todo - Add the call to RecycleRefactoringRule for every variable declaration that does not have a RecycleRefactoringRule call.
             // Todo - Detect lambda expressions (LambdaExpr) Note: use findOuterNodeOfInterest with outer predicate LambdaExpr.
             // Todo - Are there other objects other than the TypedArray and Bitmap?
             // Todo - What if the variable is sent to another method (possibly outside the current file)?

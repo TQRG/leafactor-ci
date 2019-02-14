@@ -1,4 +1,4 @@
-package recycle1;
+package rules.RecycleRefactoringRule.VariableNotRecycled;
 
 public class Recycle {
     public void wrong1(AttributeSet attrs , int defStyle) {

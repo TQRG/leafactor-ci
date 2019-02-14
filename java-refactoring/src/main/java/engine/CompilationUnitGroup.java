@@ -1,6 +1,5 @@
 package engine;
 
-import rules.RefactoringRule;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.YamlPrinter;
