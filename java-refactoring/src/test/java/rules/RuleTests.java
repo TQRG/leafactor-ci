@@ -16,8 +16,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.junit.Assert.fail;
 
 class RuleTests {
     private static final PrintStream out = System.out;
@@ -51,37 +54,45 @@ class RuleTests {
                                             file.getFileName() + "-" + subFile.getFileName(),
                                             () -> {
                                                 togglePrints(true);
-                                                String beforePath = subFile.toAbsolutePath() + "\\Before.java";
-                                                String afterPath = subFile.toAbsolutePath() + "\\After.java";
+                                                String beforePath = subFile.toAbsolutePath() + "\\Input.java";
+                                                String afterPath = subFile.toAbsolutePath() + "\\Output.java";
 
                                                 // Load input files
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Loading Files");
-                                                String beforeSample = new String(Files.readAllBytes(Paths.get(beforePath)));
-                                                String afterSample = new String(Files.readAllBytes(Paths.get(afterPath)));
+                                                String inputSample = new String(Files.readAllBytes(Paths.get(beforePath)));
+                                                String outputSample = new String(Files.readAllBytes(Paths.get(afterPath)));
 
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Finding and refactoring opportunities");
                                                 togglePrints(false);
 
                                                 // Dynamic rule instantiation
-                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(JavaParser.parse(beforeSample));
+                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(JavaParser.parse(inputSample));
                                                 Class<?> clazz = Class.forName("rules." + file.getFileName().toString());
                                                 Constructor<?> ctor = clazz.getConstructor();
                                                 RefactoringRule rule = (RefactoringRule) ctor.newInstance();
 
                                                 // Applying refactoring
                                                 rule.apply(beforeCompilationUnit);
-                                                String after = LexicalPreservingPrinter.print(beforeCompilationUnit);
+                                                String result = LexicalPreservingPrinter.print(beforeCompilationUnit);
 
                                                 togglePrints(true);
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
                                                 // Compare result with the sample
-                                                assert(after.equals(afterSample));
+
+                                                if(!result.equals(outputSample)) {
+                                                    System.out.println("RESULT \n[" + result + "]");
+                                                    System.out.println("EXPECTED \n[" + outputSample + "]");
+                                                    fail("Result does not match expected output");
+                                                    return;
+                                                }
+
+                                                System.out.println("[" + subFile.getFileName().toString() + "] Results matches output");
                                             })).collect(Collectors.toList());
                         } catch (IOException e) {
                             return null;
                         }
                     })
-                    .filter((list) -> list != null)
+                    .filter(Objects::nonNull)
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
 
