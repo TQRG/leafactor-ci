@@ -8,6 +8,5 @@ public class Recycle {
         int d = 6;
         a = getNewTypedArray();
         example = a.getString(0);
-        a.recycle();
     }
 }

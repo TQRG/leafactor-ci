@@ -7,6 +7,9 @@ public class Recycle {
         // Advanced example with Lambda expressions
         Test b = a.get((test) -> {
             final TypedArray d = getContext().obtainStyledAttributes(attrs, new int[]{0}, defStyle, 0);
+            if(d != null) {
+                d.recycle();
+            }
         });
         if(a != null) {
             a.recycle();

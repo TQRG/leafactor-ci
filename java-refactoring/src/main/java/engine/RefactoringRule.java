@@ -3,6 +3,7 @@ package engine;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -18,6 +19,27 @@ public interface RefactoringRule {
      * @param compilationUnit The compilation unit to which the rule will apply
      */
     void apply(CompilationUnit compilationUnit);
+
+
+    static boolean isParent(Node child, Node parent) {
+        Optional<Node> childParent = child.getParentNode();
+        return childParent.filter(node -> node.equals(parent) || isParent(node, parent)).isPresent();
+    }
+
+    static List<Node> regression(Node startNode, Predicate<Node> stopPredicate, Predicate<Node> isInteresting) {
+        Optional<Node> optionalParent = startNode.getParentNode();
+        if(!optionalParent.isPresent() || stopPredicate.test(optionalParent.get())) {
+            return List.of();
+        }
+        if(isInteresting.test(optionalParent.get())) {
+            return Stream.concat(
+                    List.of(optionalParent.get()).stream(),
+                    regression(optionalParent.get(), stopPredicate, isInteresting).stream()
+            ).collect(Collectors.toList());
+        }
+        return regression(optionalParent.get(), stopPredicate, isInteresting);
+    }
+
 
     /**
      * Finds a node of interest
@@ -37,10 +59,27 @@ public interface RefactoringRule {
      * @param isNodeOfInterest A predicate that identifies the interested node
      * @return True if the node of interest was found in the tree, false otherwise
      */
-    static <T extends Node> List<T> getNodesOfInterest(Node root, Predicate<Node> isNodeOfInterest, Class<T> type) {
+    static <T> List<T> getNodesOfInterest(Node root, Predicate<Node> isNodeOfInterest, Class<T> type) {
         Stream<T> a = isNodeOfInterest.test(root) ? Stream.of(type.cast(root)) : Stream.empty();
         Stream<T> b = root.getChildNodes().stream()
                 .map(node -> RefactoringRule.getNodesOfInterest(node, isNodeOfInterest, type))
+                .flatMap(List::stream);
+        return Stream.concat(a, b).collect(Collectors.toList());
+    }
+
+    /**
+     * Finds a node of interest with filter
+     * @param root The baseline node
+     * @param isNodeOfInterest A predicate that identifies the interested node
+     * @return True if the node of interest was found in the tree, false otherwise
+     */
+    static <T> List<T> getNodesOfInterestWithFilter(Node root, Predicate<Node> isNodeOfInterest, Predicate<Node> filter, Class<T> type) {
+        if(filter.test(root)) {
+            return List.of();
+        }
+        Stream<T> a = isNodeOfInterest.test(root) ? Stream.of(type.cast(root)) : Stream.empty();
+        Stream<T> b = root.getChildNodes().stream()
+                .map(node -> RefactoringRule.getNodesOfInterestWithFilter(node, isNodeOfInterest, filter, type))
                 .flatMap(List::stream);
         return Stream.concat(a, b).collect(Collectors.toList());
     }

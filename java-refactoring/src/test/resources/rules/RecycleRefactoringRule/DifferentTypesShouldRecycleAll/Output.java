@@ -26,7 +26,7 @@ public class Recycle {
         final VelocityTracker a = getContext();
         String example = a.getString(0);
         if(a != null) {
-            a.close();
+            a.recycle();
         }
     }
     public void methodMessage(AttributeSet attrs , int defStyle) {
