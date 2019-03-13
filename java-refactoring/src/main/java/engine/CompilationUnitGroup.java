@@ -1,6 +1,7 @@
 package engine;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.YamlPrinter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
@@ -56,7 +57,9 @@ public class CompilationUnitGroup {
     private String runFile(File file, List<RefactoringRule> refactoringRules) throws FileNotFoundException {
         System.out.println("FILE:" + file.getName());
         FileInputStream in = new FileInputStream(file);
-        CompilationUnit cu = LexicalPreservingPrinter.setup(JavaParser.parse(in));
+        JavaParser javaParser = new JavaParser();
+        CompilationUnit cuBefore = javaParser.parse(in).getResult().get();
+        CompilationUnit cu = LexicalPreservingPrinter.setup(cuBefore);
         for(RefactoringRule rule : refactoringRules) {
             rule.apply(cu);
         }
@@ -109,7 +112,8 @@ public class CompilationUnitGroup {
         Map<File, String> results = new HashMap<>();
         for(File file : getDirectoryFiles()) {
             FileInputStream in = new FileInputStream(file);
-            CompilationUnit cu = LexicalPreservingPrinter.setup(JavaParser.parse(in));
+            JavaParser javaParser = new JavaParser();
+            CompilationUnit cu = LexicalPreservingPrinter.setup(javaParser.parse(in).getResult().get());
             String outputContent = printer.output(cu);
             System.out.println("File: " + file.getName());
             System.out.println(Color.CYAN);

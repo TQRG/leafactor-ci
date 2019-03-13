@@ -1,12 +1,12 @@
 package rules;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.Position;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithOptionalScope;
-import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.ReturnStmt;
@@ -15,8 +15,10 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
 import engine.RefactoringRule;
+import javassist.expr.MethodCall;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,6 +29,7 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
 
     // List of classes that need to be recycled
     private Map<String, String> opportunities = new LinkedHashMap<>();
+    private List<Predicate<MethodCallExpr>> exceptions = new ArrayList<>();
 
     public RecycleRefactoringRule() {
         opportunities.put("TypedArray", "recycle");
@@ -37,6 +40,15 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
         opportunities.put("MotionEvent", "recycle");
         opportunities.put("Parcel", "recycle");
         opportunities.put("ContentProviderClient", "release");
+
+        // We already know that the variable is being sent in this methodCallExpr as an argument
+        exceptions.add(methodCallExpr -> {
+            Optional<Expression> scope = methodCallExpr.getScope();
+            return scope.isPresent()
+                    && scope.get() instanceof NameExpr
+                    && scope.get().asNameExpr().getName().getIdentifier().equals("MotionEvent")
+                    && methodCallExpr.getName().getIdentifier().equals("obtain");
+        });
     }
 
     private Map<String, String> getVariablesOfInterestDeclaredNarrow(VariableDeclarationExpr expression) {
@@ -169,12 +181,12 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
                     if(type == null) {
                         type = variableRedeclared.get(entry.getKey());
                     }
-                    System.out.println(entry.getValue() + 1);
-            Statement newStatement = createRecycleExpression(3, entry.getKey(),
-                    opportunities.get(type));
+                    int spacing = root.getEnd().get().column -1;
+                    Statement newStatement = createRecycleExpression(spacing / 4 + 1, entry.getKey(),
+                            opportunities.get(type));
 
-            root.addStatement(entry.getValue() + 1, newStatement);
-        });
+                    root.addStatement(entry.getValue() + 1, newStatement);
+                });
     }
 
     /**
@@ -311,14 +323,18 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
         boolean sentAsArgument = RefactoringRule.hasNodeOfInterest(root, (node) -> Stream.of(node)
                 .filter(MethodCallExpr.class::isInstance)
                 .map(MethodCallExpr.class::cast)
+                .filter(methodCallExpr -> {
+                  Optional<Boolean> hasExceptionsOptional = exceptions.stream()
+                          .map(methodCallExprPredicate -> methodCallExprPredicate.test(methodCallExpr))
+                          .reduce(Boolean::logicalOr);
+                  return !(hasExceptionsOptional.isPresent() && hasExceptionsOptional.get());
+                })
                 .map(MethodCallExpr::getArguments)
                 .flatMap(Collection::stream)
                 .filter(NameExpr.class::isInstance)
                 .map(nameExpr -> (NameExpr) nameExpr)
                 .map(NameExpr::getName)
                 .anyMatch(name -> name.getIdentifier().equals(variableName)));
-
-        // Todo - Check exceptions here (sometimes we know the implementation of a standard method and we know that the variable is not disposed off as well as saved somewhere during the call).
 
         // Lost variable reference
         if(sentAsArgument) {
@@ -330,15 +346,15 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
         // Lost variable reference (Recycling this variable is no longer a concern for the root block)
         boolean hasBlocksWithRedeclarations = blocks.stream()
                 .anyMatch(node ->  RefactoringRule.hasNodeOfInterest(node, element -> {
-            List<AssignExpr> assignments = Stream.of(element)
-                    .filter(AssignExpr.class::isInstance)
-                    .map(assign -> (AssignExpr) assign).collect(Collectors.toList());
+                    List<AssignExpr> assignments = Stream.of(element)
+                            .filter(AssignExpr.class::isInstance)
+                            .map(assign -> (AssignExpr) assign).collect(Collectors.toList());
 
-            return assignments.stream().map(AssignExpr::getTarget).filter(NameExpr.class::isInstance)
-                    .map(nameExpr -> (NameExpr) nameExpr)
-                    .map(NameExpr::getName)
-                    .anyMatch(name -> name.getIdentifier().equals(variableName));
-        }));
+                    return assignments.stream().map(AssignExpr::getTarget).filter(NameExpr.class::isInstance)
+                            .map(nameExpr -> (NameExpr) nameExpr)
+                            .map(NameExpr::getName)
+                            .anyMatch(name -> name.getIdentifier().equals(variableName));
+                }));
 
         return !hasBlocksWithRedeclarations;
     }
@@ -353,25 +369,18 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
      */
     private Statement createRecycleExpression(int tabs, String variableName, String recyclingMethodName) {
         String tab = "    ";
-        String baseTabPadding = tabs > 0 ? "  " : "";
+        String baseTabPadding = tabs > 0 ? tab : "";
         for (int i = 1; i < tabs; i++) {
-            baseTabPadding += baseTabPadding;
+            baseTabPadding += tab;
         }
-        System.out.println(String.format(
-                System.getProperty("line.separator") +
-                        "if(%s != null) {" + System.getProperty("line.separator") +
-                        baseTabPadding + tab + "%s.%s();" + System.getProperty("line.separator") +
-                        baseTabPadding + "}",
-                variableName,
-                variableName,
-                recyclingMethodName));
+        System.out.println("[" + baseTabPadding + "]");
+        String EOL = System.getProperty("line.separator");
+
         return LexicalPreservingPrinter.setup(
-                JavaParser.parseStatement(
-                        String.format(
-                                System.getProperty("line.separator") +
-                                        "if(%s != null) {" + System.getProperty("line.separator") +
-                                        baseTabPadding + tab + "%s.%s();" + System.getProperty("line.separator") +
-                                        baseTabPadding + "}",
+                StaticJavaParser.parseStatement(
+                        String.format("if(%s != null) {" + EOL +
+                                        baseTabPadding + tab + "%s.%s();" + EOL +
+                                        baseTabPadding + "}" + EOL,
                                 variableName,
                                 variableName,
                                 recyclingMethodName)));

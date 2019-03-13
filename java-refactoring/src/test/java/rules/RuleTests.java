@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 class RuleTests {
@@ -66,7 +67,8 @@ class RuleTests {
                                                 togglePrints(false);
 
                                                 // Dynamic rule instantiation
-                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(JavaParser.parse(inputSample));
+                                                JavaParser javaParser = new JavaParser();
+                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(javaParser.parse(inputSample).getResult().get());
                                                 Class<?> clazz = Class.forName("rules." + file.getFileName().toString());
                                                 Constructor<?> ctor = clazz.getConstructor();
                                                 RefactoringRule rule = (RefactoringRule) ctor.newInstance();
@@ -78,15 +80,7 @@ class RuleTests {
                                                 togglePrints(true);
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
                                                 // Compare result with the sample
-
-                                                if(!result.equals(outputSample)) {
-                                                    System.out.println("RESULT \n[" + result + "]");
-                                                    System.out.println("EXPECTED \n[" + outputSample + "]");
-                                                    fail("Result does not match expected output");
-                                                    return;
-                                                }
-
-                                                System.out.println("[" + subFile.getFileName().toString() + "] Results matches output");
+                                                assertEquals(outputSample, result);
                                             })).collect(Collectors.toList());
                         } catch (IOException e) {
                             return null;

@@ -65,6 +65,7 @@ public class RecycleSample {
         query.getLong(0);
         query = provider.query(uri, null, null, null, null);
         query.close();
+
     }
 
     public class RecycleTest extends View {
@@ -105,12 +106,14 @@ public class RecycleSample {
             MotionEvent event1 = MotionEvent.obtain(null); // OK
             MotionEvent event2 = MotionEvent.obtainNoHistory(null); // Not recycled
             event1.recycle();
+
         }
 
         public void motionEvent3() {
             MotionEvent event1 = MotionEvent.obtain(null);  // Not recycled
             MotionEvent event2 = MotionEvent.obtain(event1);
             event2.recycle();
+
         }
 
         // ---- Check recycling Parcel ----
