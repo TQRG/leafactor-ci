@@ -1,33 +1,15 @@
-public class Teste {
-    public void testMultipleAssignment(Uri uri, ContentProvider provider){
-        Cursor query = provider.query(uri, null, null, null, null);
-        query.getLong(0); // Teste
+public abstract class ViewHolderSample extends BaseAdapter {
+    public static class Adapter2 extends ViewHolderSample {
+        LayoutInflater mInflater;
 
-    }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            convertView = mInflater.inflate(R.layout.your_layout, null);
 
-    public void testMultipleAssignment1(Uri uri, ContentProvider provider){
-        Cursor query = provider.query(uri, null, null, null, null);
-        query.getLong(0); // Teste
-    }
+            TextView text = (TextView) convertView.findViewById(R.id.text);
+            text.setText("Position " + position);
 
-    public void testMultipleAssignment2(Uri uri, ContentProvider provider){
-        Cursor query = provider.query(uri, null, null, null, null);
-        query.getLong(0); // Teste
-        System.out.println();
-    }
-
-    public void testMultipleAssignment3(Uri uri, ContentProvider provider){
-        Cursor query = provider.query(uri, null, null, null, null);
-        query.getLong(0);
+            return convertView;
+        }
     }
 }
-
-//public class Teste {
-//    public void testMultipleAssignment(Uri uri, ContentProvider provider) {
-//        a.get(() -> {
-//            Cursor query = provider.query(uri, null, null, null, null);
-//            query.getLong(0); // Teste
-//        });
-//    }
-//}
-
