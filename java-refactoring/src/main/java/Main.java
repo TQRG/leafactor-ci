@@ -1,14 +1,14 @@
 import engine.CompilationUnitGroup;
-        import rules.RecycleRefactoringRule;
-        import engine.RefactoringRule;
+import rules.RecycleRefactoringRule;
+import engine.RefactoringRule;
 import rules.ViewHolderRefactoringRule;
 
 import java.io.*;
-        import java.net.URISyntaxException;
-        import java.net.URL;
-        import java.nio.file.Paths;
-        import java.util.ArrayList;
-        import java.util.List;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String [] args) throws IOException, URISyntaxException {

@@ -1,4 +1,21 @@
 public abstract class ViewHolderSample extends BaseAdapter {
+
+    public static class Adapter1 extends ViewHolderSample {
+        LayoutInflater inflater;
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            View rootView;
+            final int itemViewType = getItemViewType(position);
+            switch (itemViewType) {
+                case 0:
+                    rootView = convertView != null ? convertView : inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                    break;
+            }
+            return rootView;
+        }
+    }
+
     public static class Adapter2 extends ViewHolderSample {
         LayoutInflater mInflater;
 
@@ -8,18 +25,7 @@ public abstract class ViewHolderSample extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolderItem viewHolderItem;
-            if (convertView == null) {
-                convertView = mInflater.inflate(R.layout.your_layout, null);
-                viewHolderItem = new ViewHolderItem();
-                viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
-                convertView.setTag(viewHolderItem);
-            } else {
-                viewHolderItem = (ViewHolderItem) convertView.getTag();
-            }
-            TextView text = viewHolderItem.text;
-            text.setText("Position " + position);
-
+            convertView = convertView != null ? convertView : mInflater.inflate(R.layout.your_layout, null);
             return convertView;
         }
     }
