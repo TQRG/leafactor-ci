@@ -1,6 +1,5 @@
 package rules;
 
-import com.github.javaparser.Position;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -15,7 +14,6 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
 import engine.RefactoringRule;
-import javassist.expr.MethodCall;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -369,9 +367,9 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
      */
     private Statement createRecycleExpression(int tabs, String variableName, String recyclingMethodName) {
         String tab = "    ";
-        String baseTabPadding = tabs > 0 ? tab : "";
+        StringBuilder baseTabPadding = new StringBuilder(tabs > 0 ? tab : "");
         for (int i = 1; i < tabs; i++) {
-            baseTabPadding += tab;
+            baseTabPadding.append(tab);
         }
         System.out.println("[" + baseTabPadding + "]");
         String EOL = System.getProperty("line.separator");

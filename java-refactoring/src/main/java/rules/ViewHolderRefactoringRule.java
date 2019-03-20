@@ -3,13 +3,17 @@ package rules;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithOptionalBlockStmt;
 import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import engine.CaseOfInterest;
+import engine.IterationContext;
+import engine.RefactoringIterationContext;
 import engine.RefactoringRule;
+import rules.ViewHolderCasesOfInterest.*;
 
 import java.util.*;
 
@@ -18,91 +22,9 @@ import java.util.*;
  */
 public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
 
-    private abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
-        String caseIdentifier;
-        int index; // Order
-        boolean iteratingRoot;
-        int statementIndex;
-        Statement statement;
-        NodeWithOptionalBlockStmt container;
-
-        CaseOfInterest(String caseIdentifier, IterationContext context) {
-            this.caseIdentifier = caseIdentifier;
-            this.index = context.statementIndex;
-            this.statementIndex = context.statementIndex;
-            this.statement = context.statement;
-            this.iteratingRoot = context.iteratingRoot;
-            this.container = context.container;
-        }
-
-        @Override
-        public int compareTo(CaseOfInterest caseOfInterest) {
-            if (caseOfInterest == null || !container.equals(caseOfInterest.container)) {
-                return 0;
-            }
-            return caseOfInterest.index - this.index;
-        }
-    }
-
-    private class ConvertViewReassignInflator extends CaseOfInterest {
-        static final String IDENTIFIER = "CONVERT_VIEW_REASSIGNED_INFLATOR";
-        // We do not know if the convertView was used up to this point, we might have something like:
-                    /*  if(convertView != null) {
-                            return convertView;
-                        }
-                        convertView = layoutInflator.inflate(...);
-                    */
-        // Or
-                    /*
-                        if(convertView == null) {
-                            convertView = layoutInflator.inflate(...);
-                        }
-                     */
-        // ConvertView was reassigned with an inflated View
-        // Consequence: This is considered bad practice, should be refactored to a ternary expression
-        ConvertViewReassignInflator(IterationContext context) {
-            super(IDENTIFIER, context);
-        }
-    }
-
-    private class VariableAssignedInflator extends CaseOfInterest {
-        static final String IDENTIFIER = "VARIABLE_ASSIGNED_INFLATOR";
-        // Other variable was reassigned with an inflated View
-        // Consequence: We need to keep track of it
-        String variableName;
-        VariableAssignedInflator(String variableName, IterationContext context) {
-            super(IDENTIFIER, context);
-            this.variableName = variableName;
-        }
-    }
-
-    private class ConvertViewReuseWithTernary extends CaseOfInterest {
-        static final String IDENTIFIER = "CONVERT_VIEW_REUSE_WITH_TERNARY";
-        String variableName;
-        ConvertViewReuseWithTernary(IterationContext context) {
-            super(IDENTIFIER, context);
-            this.variableName = variableName;
-        }
-    }
-
-    private class VariableAssignedFindViewById extends CaseOfInterest {
-        static final String IDENTIFIER = "VARIABLE_ASSIGNED_FIND_VIEW_BY_ID";
-        String variableName;
-        VariableAssignedFindViewById(String variableName, IterationContext context) {
-            super(IDENTIFIER, context);
-            this.variableName = variableName;
-        }
-    }
-
-    private class IterationContext {
-        MethodDeclaration methodDeclaration;
-        NodeWithOptionalBlockStmt container;
-        boolean iteratingRoot;
-        BlockStmt blockStmt;
-        int statementIndex;
-        Statement statement;
-        Set<CaseOfInterest> caseOfInterests = new TreeSet<>();
-    }
+    // TODO - Add other cases of interest:
+    // TODO -> getTag()
+    // TODO -> convertView == null
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
         // public View getView(final int position, final View convertView, final ViewGroup parent)
@@ -167,7 +89,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             String argumentName = context.methodDeclaration.getParameter(1).getName().getIdentifier();
             boolean assignedToConvertView = targetName.equals(argumentName);
             if (assignedToConvertView) {
-                context.caseOfInterests.add(new ConvertViewReassignInflator(context));
+                context.caseOfInterests.add(new ConvertViewReassignInflator(assignExpr, methodCallExpr, context));
             } else {
                 context.caseOfInterests.add(new VariableAssignedInflator(targetName, context));
             }
@@ -179,7 +101,6 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         if (assignExpr.getValue().asConditionalExpr().getCondition().isBinaryExpr()) {
             String argumentName = context.methodDeclaration.getParameter(1).getName().getIdentifier();
             BinaryExpr binaryExpr = assignExpr.getValue().asConditionalExpr().getCondition().asBinaryExpr();
-
 
             if (binaryExpr.getOperator() != BinaryExpr.Operator.EQUALS
                     && binaryExpr.getOperator() != BinaryExpr.Operator.NOT_EQUALS) {
@@ -213,12 +134,19 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
                 return;
             }
 
+            Expression target = assignExpr.getTarget();
+            // TODO - Reconsider other possibilities
+            if (!target.isNameExpr()) {
+                return;
+            }
+            String targetName = target.asNameExpr().getName().getIdentifier();
+
             MethodCallExpr methodCallExpr = expressionB.asMethodCallExpr();
             boolean isInflateCall = methodCallExpr.getName().getIdentifier().equals("inflate");
             boolean takesTwoArguments = methodCallExpr.getArguments().size() == 2;
             boolean validInstance = methodCallExpr.getScope().isPresent() && checkDeclaredLayoutInflator(context, methodCallExpr.getScope().get().asNameExpr());
             if(expressionA.asNameExpr().getNameAsString().equals(argumentName) && isInflateCall && takesTwoArguments && validInstance) {
-                context.caseOfInterests.add(new ConvertViewReuseWithTernary(context));
+                context.caseOfInterests.add(new ConvertViewReuseWithTernary(targetName, context));
             }
         }
     }
@@ -246,22 +174,68 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         }
     }
 
-    private void checkDirectFindViewByIdAssignment(AssignExpr assignExpr, IterationContext context) {
-        // We are assigning to the variable a method call
-        MethodCallExpr methodCallExpr = assignExpr.getValue().asMethodCallExpr();
+    private boolean isFindViewByIdCall(MethodCallExpr methodCallExpr) {
         boolean isFindViewByIdCall = methodCallExpr.getName().getIdentifier().equals("findViewById");
         boolean takesOneArguments = methodCallExpr.getArguments().size() == 1;
-        // TODO - check if we are using a View instance (low priority)
         boolean validInstance = true;
-        if (isFindViewByIdCall && takesOneArguments && validInstance) {
-            // Here we know that we are calling method with the same signature
+        return isFindViewByIdCall && takesOneArguments && validInstance;
+    }
+
+    private void checkDirectFindViewByIdAssignment(AssignExpr assignExpr, IterationContext context) {
+        Optional<Type> castType = Optional.empty();
+        Expression value = assignExpr.getValue();
+
+        if(value.isCastExpr()) {
+            CastExpr castExpr = value.asCastExpr();
+            castType = Optional.of(castExpr.getType());
+            value = castExpr.getExpression();
+        }
+
+        if (!value.isMethodCallExpr()) {
+            return;
+        }
+        // We are assigning to the variable a method call
+        MethodCallExpr methodCallExpr = value.asMethodCallExpr();
+        if(isFindViewByIdCall(methodCallExpr)) {
             Expression target = assignExpr.getTarget();
             // TODO - Reconsider other possibilities
             if (!target.isNameExpr()) {
                 return;
             }
             String targetName = target.asNameExpr().getName().getIdentifier();
-            context.caseOfInterests.add(new VariableAssignedFindViewById(targetName, context));
+            context.caseOfInterests.add(new VariableAssignedFindViewById(assignExpr, castType.orElse(null), targetName, context));
+        }
+    }
+
+    private void checkDirectFindViewByIdDeclaration(VariableDeclarationExpr declarationExpr, IterationContext context) {
+        // We are assigning to the variable a method call
+        for(VariableDeclarator variableDeclarator : declarationExpr.getVariables()) {
+            String variableName = variableDeclarator.getNameAsString();
+            Type type = variableDeclarator.getType();
+            context.caseOfInterests.add(new VariableDeclared(type, variableName, context));
+            Optional<Expression> optionalInitializer = variableDeclarator.getInitializer();
+            if(!optionalInitializer.isPresent()) {
+                continue;
+            }
+
+            // Ignoring casts for now
+            Optional<Type> castType = Optional.empty();
+            Expression value = optionalInitializer.get();
+
+            if(value.isCastExpr()) {
+                CastExpr castExpr = value.asCastExpr();
+                castType = Optional.of(castExpr.getType());
+                value = castExpr.getExpression();
+            }
+
+            if (!value.isMethodCallExpr()) {
+                continue;
+            }
+
+            MethodCallExpr initializer = value.asMethodCallExpr();
+            if(isFindViewByIdCall(initializer)) {
+                context.caseOfInterests.add(new VariableAssignedFindViewById(variableDeclarator, castType.orElse(null), variableName, context));
+            }
         }
     }
 
@@ -271,15 +245,10 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             return;
         }
         Expression expression = context.statement.asExpressionStmt().getExpression();
-        // TODO - Variable declarations are also a thing we should consider
-        boolean isAssignExpression = expression.isAssignExpr();
-        if (!isAssignExpression) {
-            return;
-        }
-        // We know up to this point that the current statement is a variable assignment
-        AssignExpr assignExpr = expression.asAssignExpr();
-        if (assignExpr.getValue().isMethodCallExpr()) {
-            checkDirectFindViewByIdAssignment(assignExpr, context);
+        if (expression.isAssignExpr()) {
+            checkDirectFindViewByIdAssignment(expression.asAssignExpr(), context);
+        } else if(expression.isVariableDeclarationExpr()) {
+            checkDirectFindViewByIdDeclaration(expression.asVariableDeclarationExpr(), context);
         }
     }
 
@@ -288,7 +257,6 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         if (context.statement instanceof NodeWithOptionalBlockStmt) {
             IterationContext deeperContext = iterateWithNewContext(context.methodDeclaration, false, (NodeWithOptionalBlockStmt) context.statement);
             // TODO - Do something with the deeper context, compile the information that was gathered into the og context.
-
         }
         checkReusingConvertView(context);
         checkFindViewById(context);
@@ -302,7 +270,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             context.methodDeclaration = methodDeclaration;
             context.container = currentStatement;
             context.blockStmt = blockStmt;
-            context.iteratingRoot = true;
+            context.iteratingRoot = iteratingRoot;
             for (int i = 0; i < blockStmt.getStatements().size(); i++) {
                 context.statement = blockStmt.getStatements().get(i);
                 context.statementIndex = i;
@@ -320,10 +288,18 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         }
         System.out.println("Signature matches");
         IterationContext context = iterateWithNewContext(methodDeclaration, true, methodDeclaration);
+        if(context == null) {
+            return;
+        }
         // TODO - Refactoring is done in the end.
         System.out.println("DONE");
-    }
 
+        RefactoringIterationContext refactoringIterationContext = new RefactoringIterationContext();
+        refactoringIterationContext.context = context;
+        for(CaseOfInterest caseOfInterest : context.caseOfInterests) {
+            caseOfInterest.refactoringIteration(refactoringIterationContext);
+        }
+    }
 
     @Override
     public void visit(MethodDeclaration methodDeclaration, Void arg) {

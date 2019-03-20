@@ -19,8 +19,8 @@ public abstract class ViewHolderSample extends BaseAdapter {
             if(viewHolderItem == null) {
                 convertView.setTag(new ViewHolderItem());
             }
-            viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
-            text.setText("Position " + position);
+            viewHolderItem.text = viewHolderItem.text != null ? viewHolderItem.text : (TextView) convertView.findViewById(R.id.text);
+            viewHolderItem.text.setText("Position " + position);
 
             return convertView;
         }

@@ -4,11 +4,9 @@ public abstract class ViewHolderSample extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View teste;
-            teste = convertView != null ? convertView : mInflater.inflate(R.layout.your_layout, null);
+            convertView = convertView != null ? convertView : mInflater.inflate(R.layout.your_layout, null);
 
-            TextView text;
-            text = (TextView) convertView.findViewById(R.id.text);
+            TextView text = (TextView) convertView.findViewById(R.id.text);
             text.setText("Position " + position);
 
             return convertView;
