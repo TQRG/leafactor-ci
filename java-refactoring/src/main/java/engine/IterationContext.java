@@ -5,8 +5,8 @@ import com.github.javaparser.ast.nodeTypes.NodeWithOptionalBlockStmt;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IterationContext {
     public MethodDeclaration methodDeclaration;
@@ -15,6 +15,5 @@ public class IterationContext {
     public BlockStmt blockStmt;
     public int statementIndex;
     public Statement statement;
-    public Set<CaseOfInterest> caseOfInterests = new TreeSet<>();
-
+    public List<CaseOfInterest> caseOfInterests = new ArrayList<>();
 }

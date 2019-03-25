@@ -28,4 +28,24 @@ public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
         }
         return this.index - caseOfInterest.index;
     }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public boolean isIteratingRoot() {
+        return iteratingRoot;
+    }
+
+    public int getStatementIndex() {
+        return statementIndex;
+    }
+
+    public Statement getStatement() {
+        return statement;
+    }
+
+    public NodeWithOptionalBlockStmt<BlockStmt> getContainer() {
+        return container;
+    }
 }

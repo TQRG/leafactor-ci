@@ -4,6 +4,7 @@ import com.github.javaparser.ast.expr.*;
 import engine.CaseOfInterest;
 import engine.IterationContext;
 import engine.RefactoringIterationContext;
+import rules.ViewHolderRefactoringRule;
 
 public class ConvertViewReassignInflator extends CaseOfInterest {
     private MethodCallExpr methodCallExpr;
@@ -12,6 +13,40 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
         super(context);
         this.methodCallExpr = methodCallExpr;
         this.assignExpr = assignExpr;
+    }
+
+    public static void checkStatement(IterationContext context) {
+        boolean isExpressionStmt = context.statement.isExpressionStmt();
+        if (!isExpressionStmt) {
+            return;
+        }
+        Expression expression = context.statement.asExpressionStmt().getExpression();
+        boolean isAssignExpression = expression.isAssignExpr();
+        if (!isAssignExpression) {
+            return;
+        }
+        AssignExpr assignExpr = expression.asAssignExpr();
+        if(!assignExpr.getValue().isMethodCallExpr()) {
+            return;
+        }
+        MethodCallExpr methodCallExpr = assignExpr.getValue().asMethodCallExpr();
+        boolean isInflateCall = methodCallExpr.getName().getIdentifier().equals("inflate");
+        boolean takesTwoArguments = methodCallExpr.getArguments().size() == 2;
+        boolean validInstance = methodCallExpr.getScope().isPresent()
+                && ViewHolderRefactoringRule.checkDeclaredLayoutInflator(context, methodCallExpr.getScope().get().asNameExpr());
+        if (isInflateCall && takesTwoArguments && validInstance) {
+            // Here we know that we are calling method with the same signature
+            Expression target = assignExpr.getTarget();
+            if (!target.isNameExpr()) {
+                return;
+            }
+            String targetName = target.asNameExpr().getName().getIdentifier();
+            String argumentName = context.methodDeclaration.getParameter(1).getName().getIdentifier();
+            boolean assignedToConvertView = targetName.equals(argumentName);
+            if (assignedToConvertView) {
+                context.caseOfInterests.add(new ConvertViewReassignInflator(assignExpr, methodCallExpr, context));
+            }
+        }
     }
 
     @Override
@@ -41,4 +76,5 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
         conditionalExpr.setElseExpr(methodCallExpr);
         assignExpr.setValue(conditionalExpr);
     }
+
 }

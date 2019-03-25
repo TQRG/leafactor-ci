@@ -1,9 +1,16 @@
 package rules.ViewHolderCasesOfInterest;
 
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.AssignExpr;
+import com.github.javaparser.ast.expr.CastExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.type.Type;
 import engine.CaseOfInterest;
 import engine.IterationContext;
 import engine.RefactoringIterationContext;
+
+import java.util.Optional;
 
 public class VariableDeclared extends CaseOfInterest {
     Type variableType;
@@ -12,6 +19,21 @@ public class VariableDeclared extends CaseOfInterest {
         super(context);
         this.variableType = variableType;
         this.variableName = variableName;
+    }
+
+    public static void checkStatement(IterationContext context) {
+        boolean isExpressionStmt = context.statement.isExpressionStmt();
+        if (!isExpressionStmt) {
+            return;
+        }
+        Expression expression = context.statement.asExpressionStmt().getExpression();
+        if(expression.isVariableDeclarationExpr()) {
+            for(VariableDeclarator variableDeclarator : expression.asVariableDeclarationExpr().getVariables()) {
+                String variableName = variableDeclarator.getNameAsString();
+                Type type = variableDeclarator.getType();
+                context.caseOfInterests.add(new VariableDeclared(type, variableName, context));
+            }
+        }
     }
 
     @Override

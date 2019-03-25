@@ -10,6 +10,17 @@ public abstract class ViewHolderSample extends BaseAdapter {
         LayoutInflater mInflater;
 
         public View getView(int position, View convertView, ViewGroup parent) {
+            if(convertView == null) {
+                convertView = mInflater.inflate(R.layout.your_layout, null);
+            }
+            return convertView;
+        }
+    }
+
+    public static class Adapter3 extends ViewHolderSample {
+        LayoutInflater mInflater;
+
+        public View getView(int position, View convertView, ViewGroup parent) {
             if(convertView != null) {
                 return convertView
             }
@@ -37,4 +48,23 @@ public abstract class ViewHolderSample extends BaseAdapter {
             return convertView;
         }
     }
+
+    public static class Adapter6 extends ViewHolderSample {
+        LayoutInflater inflater;
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            View rootView = convertView;
+            final int itemViewType = getItemViewType(position);
+            switch (itemViewType) {
+                case 0:
+                    if (rootView != null)
+                        return rootView;
+                    rootView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                    break;
+            }
+            return rootView;
+        }
+    }
+
 }
