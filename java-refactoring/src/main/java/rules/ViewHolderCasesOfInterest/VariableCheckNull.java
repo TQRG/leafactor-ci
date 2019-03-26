@@ -2,6 +2,7 @@ package rules.ViewHolderCasesOfInterest;
 
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.IfStmt;
+import com.github.javaparser.ast.stmt.Statement;
 import engine.CaseOfInterest;
 import engine.IterationContext;
 import engine.RefactoringIterationContext;
@@ -12,6 +13,14 @@ public class VariableCheckNull extends CaseOfInterest {
     public VariableCheckNull(String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
+    }
+
+    public VariableCheckNull(String variableName, IterationContext context, Statement statement, int index, int statementIndex) {
+        super(context);
+        this.variableName = variableName;
+        this.statement = statement;
+        this.index = index;
+        this.statementIndex = statementIndex;
     }
 
     private static boolean isNullCondition(Expression conditionExpr, IterationContext context) {

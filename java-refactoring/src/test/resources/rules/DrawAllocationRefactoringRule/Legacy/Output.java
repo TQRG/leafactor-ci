@@ -27,7 +27,6 @@ public class DrawAllocationSample extends Button {
 
         // Various allocations:
         new String("foo");
-        String s = new String("bar");
 
         // This one should not be reported:
         Integer i = new Integer(5);
@@ -44,7 +43,6 @@ public class DrawAllocationSample extends Button {
 
         Integer i2 = new Integer(i);
         Integer i3 = (Integer) new Integer(2);
-        Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
 
         // Non-allocations
         super.animate();
@@ -53,6 +51,7 @@ public class DrawAllocationSample extends Button {
         // This will involve allocations, but we don't track
         // inter-procedural stuff here
         someOtherMethod();
+        myOtherMap.clear();
     }
 
     void someOtherMethod() {
@@ -81,8 +80,14 @@ public class DrawAllocationSample extends Button {
         @Override
         protected void onDraw(android.graphics.Canvas canvas) {
             super.onDraw(canvas);
-            List<Integer> array = new ArrayList<Integer>();
+            array.clear();
             return;
         }
+
+        List<Integer> array = new ArrayList<Integer>();
     }
+
+    String s = new String("bar");
+
+    Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
 }

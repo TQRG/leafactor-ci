@@ -5,7 +5,7 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithOptionalBlockStmt;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.Type;
@@ -16,12 +16,15 @@ import engine.RefactoringIterationContext;
 import engine.RefactoringRule;
 import rules.ViewHolderCasesOfInterest.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Refactoring rule that applies the view holder pattern
  */
-public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
+public class WakeLockRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
 
     // TODO - Add other cases of interest:
     // TODO -> getTag()
@@ -81,13 +84,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             iterate(deeperContext);
             // Todo: do something with the deeperContext
         }
-        ConvertViewReassignInflator.checkStatement(context);
-        ConvertViewReuseWithTernary.checkStatement(context);
-        VariableAssignedFindViewById.checkStatement(context);
-        VariableAssignedInflator.checkStatement(context);
-        VariableDeclared.checkStatement(context);
-        VariableCheckNull.checkStatement(context);
-        VariableAssignedGetTag.checkStatement(context);
+        // TODO - do something
     }
 
     private IterationContext iterateWithNewContext(MethodDeclaration methodDeclaration, boolean iteratingRoot, NodeWithOptionalBlockStmt currentStatement) {

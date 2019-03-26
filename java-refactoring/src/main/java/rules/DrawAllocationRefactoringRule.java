@@ -5,7 +5,8 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithOptionalBlockStmt;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.Type;
@@ -14,14 +15,18 @@ import engine.CaseOfInterest;
 import engine.IterationContext;
 import engine.RefactoringIterationContext;
 import engine.RefactoringRule;
+import rules.DrawAllocationCasesOfInterest.ObjectAllocation;
 import rules.ViewHolderCasesOfInterest.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Refactoring rule that applies the view holder pattern
  */
-public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
+public class DrawAllocationRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
 
     // TODO - Add other cases of interest:
     // TODO -> getTag()
@@ -29,50 +34,29 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
         // public View getView(final int position, final View convertView, final ViewGroup parent)
-        boolean nameMatch = methodDeclaration.getNameAsString().equals("getView");
+        boolean nameMatch = methodDeclaration.getNameAsString().equals("onDraw");
         Type type = methodDeclaration.getType();
-        boolean returnTypeMatch = type.isClassOrInterfaceType() && type.asClassOrInterfaceType().getName()
-                .getIdentifier().equals("View");
-
-        boolean isPublic = methodDeclaration.getModifiers().contains(Modifier.publicModifier());
-        boolean hasSameNumberOfArguments = methodDeclaration.getParameters().size() == 3;
-        System.out.println("Name match: " + nameMatch);
-        System.out.println("Is public: " + isPublic);
-        System.out.println("Same Number of arguments: " + hasSameNumberOfArguments);
+        boolean returnTypeMatch = type.isVoidType();
+        boolean isProtected = methodDeclaration.getModifiers().contains(Modifier.protectedModifier());
+        boolean hasSameNumberOfArguments = methodDeclaration.getParameters().size() == 1;
+//        System.out.println("Name match: " + nameMatch);
+//        System.out.println("Is public: " + isProtected);
+//        System.out.println("Same Number of arguments: " + hasSameNumberOfArguments);
         if (hasSameNumberOfArguments) {
             Type firstArgumentType = methodDeclaration.getParameter(0).getType();
-            boolean firstArgumentTypeMatches = firstArgumentType.isPrimitiveType() &&
-                    firstArgumentType.asPrimitiveType().getType().asString().equals("int");
+            boolean firstArgumentTypeMatches = firstArgumentType.isClassOrInterfaceType() &&
+                    firstArgumentType.asClassOrInterfaceType().getNameAsString().endsWith("Canvas");
 
-            Type secondArgumentType = methodDeclaration.getParameter(1).getType();
-            boolean secondArgumentTypeMatches = secondArgumentType.isClassOrInterfaceType() &&
-                    secondArgumentType.asClassOrInterfaceType().getName().getIdentifier().equals("View");
+//            System.out.println("First argument type matches: " + firstArgumentTypeMatches);
 
-            Type thirdArgumentType = methodDeclaration.getParameter(2).getType();
-            boolean thirdArgumentTypeMatches = thirdArgumentType.isClassOrInterfaceType() &&
-                    thirdArgumentType.asClassOrInterfaceType().getName().getIdentifier().equals("ViewGroup");
-
-            System.out.println("First argument type matches: " + firstArgumentTypeMatches);
-            System.out.println("Second argument type matches: " + secondArgumentTypeMatches);
-            System.out.println("Third argument type matches: " + thirdArgumentTypeMatches);
-
-            return isPublic &&
+            return isProtected &&
                     nameMatch &&
                     returnTypeMatch &&
-                    firstArgumentTypeMatches &&
-                    secondArgumentTypeMatches &&
-                    thirdArgumentTypeMatches;
+                    firstArgumentTypeMatches;
         }
 
         return false;
     }
-
-    static public boolean checkDeclaredLayoutInflator(IterationContext context, NameExpr nameExpr) {
-        // TODO - backtrack to find if the layout inflator was declared
-        // Returning true because we might want to implement this last
-        return true;
-    }
-
 
     // This iteration can occur in inner blocks too
     private void iterate(IterationContext context) {
@@ -81,13 +65,8 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             iterate(deeperContext);
             // Todo: do something with the deeperContext
         }
-        ConvertViewReassignInflator.checkStatement(context);
-        ConvertViewReuseWithTernary.checkStatement(context);
-        VariableAssignedFindViewById.checkStatement(context);
-        VariableAssignedInflator.checkStatement(context);
         VariableDeclared.checkStatement(context);
-        VariableCheckNull.checkStatement(context);
-        VariableAssignedGetTag.checkStatement(context);
+        ObjectAllocation.checkStatement(context);
     }
 
     private IterationContext iterateWithNewContext(MethodDeclaration methodDeclaration, boolean iteratingRoot, NodeWithOptionalBlockStmt currentStatement) {
@@ -111,7 +90,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
     private void refactor(MethodDeclaration methodDeclaration) {
         if (!methodSignatureMatches(methodDeclaration)) {
-            System.out.println("Signature does not match");
+//            System.out.println("Signature does not match");
             return;
         }
         System.out.println("Signature matches");
@@ -122,22 +101,22 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         RefactoringIterationContext refactoringIterationContext = new RefactoringIterationContext();
         refactoringIterationContext.context = context;
 
-        List<CaseOfInterest> copy = new ArrayList<>();
-        copy.addAll(context.caseOfInterests);
+        List<CaseOfInterest> copy = new ArrayList<>(context.caseOfInterests);
         Iterator<CaseOfInterest> iterator = copy.iterator();
         refactoringIterationContext.iterator = iterator;
         while(iterator.hasNext()) {
             CaseOfInterest caseOfInterest = iterator.next();
+            System.out.println("HERE!" + caseOfInterest);
             caseOfInterest.refactoringIteration(refactoringIterationContext);
         }
     }
 
     @Override
     public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, Void arg) {
-        Iterator<Node> iterator = classOrInterfaceDeclaration.getChildNodes().iterator();
-        while(iterator.hasNext()) {
-            Node node = iterator.next();
-            if(node instanceof MethodDeclaration) {
+        // Todo - check class extension
+
+        for (Node node : classOrInterfaceDeclaration.getChildNodes()) {
+            if (node instanceof MethodDeclaration) {
                 refactor((MethodDeclaration) node);
             }
         }
