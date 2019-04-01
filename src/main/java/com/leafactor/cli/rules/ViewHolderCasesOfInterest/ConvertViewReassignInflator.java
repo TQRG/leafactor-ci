@@ -9,13 +9,13 @@ import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 public class ConvertViewReassignInflator extends CaseOfInterest {
     private MethodCallExpr methodCallExpr;
     private AssignExpr assignExpr;
-    public ConvertViewReassignInflator(AssignExpr assignExpr, MethodCallExpr methodCallExpr, IterationContext context) {
+    private ConvertViewReassignInflator(AssignExpr assignExpr, MethodCallExpr methodCallExpr, IterationContext context) {
         super(context);
         this.methodCallExpr = methodCallExpr;
         this.assignExpr = assignExpr;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -41,7 +41,7 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
                 return;
             }
             String targetName = target.asNameExpr().getName().getIdentifier();
-            String argumentName = context.methodDeclaration.getParameter(1).getName().getIdentifier();
+            String argumentName = context.getClosestMethodDeclarationParent().getParameter(1).getName().getIdentifier();
             boolean assignedToConvertView = targetName.equals(argumentName);
             if (assignedToConvertView) {
                 context.caseOfInterests.add(new ConvertViewReassignInflator(assignExpr, methodCallExpr, context));
@@ -50,8 +50,9 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
-        String argumentName = refactoringIterationContext.context.methodDeclaration.getParameter(1).getName().getIdentifier();
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+        String argumentName = refactoringIterationContext.getClosestMethodDeclarationParent()
+                .getParameter(1).getName().getIdentifier();
         // TODO - We do not know if the convertView was used up to this point, we might have something like:
             /*  if(convertView != null) {
                     return convertView;

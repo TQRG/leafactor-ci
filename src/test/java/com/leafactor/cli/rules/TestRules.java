@@ -1,8 +1,9 @@
 package com.leafactor.cli.rules;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
+import com.leafactor.cli.engine.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -66,11 +67,11 @@ class TestRules {
                                                 togglePrints(false);
 
                                                 // Dynamic rule instantiation
-                                                JavaParser javaParser = new JavaParser();
-                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(javaParser.parse(inputSample));
+                                                CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(StaticJavaParser.parse(inputSample));
                                                 Class<?> clazz = Class.forName("com.leafactor.cli.rules." + file.getFileName().toString());
-                                                Constructor<?> ctor = clazz.getConstructor();
-                                                RefactoringRule rule = (RefactoringRule) ctor.newInstance();
+                                                IterationLogger logger = new IterationLogger();
+                                                Constructor<?> ctor = clazz.getConstructor(IterationLogger.class);
+                                                RefactoringRule rule = (RefactoringRule) ctor.newInstance(logger);
 
                                                 // Applying refactoring
                                                 rule.apply(beforeCompilationUnit);

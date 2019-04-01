@@ -10,12 +10,12 @@ import com.leafactor.cli.engine.RefactoringIterationContext;
 public class VariableCheckNull extends CaseOfInterest {
 
     String variableName;
-    public VariableCheckNull(String variableName, IterationContext context) {
+    private VariableCheckNull(String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
     }
 
-    public VariableCheckNull(String variableName, IterationContext context, Statement statement, int index, int statementIndex) {
+    VariableCheckNull(String variableName, IterationContext context, Statement statement, int index, int statementIndex) {
         super(context);
         this.variableName = variableName;
         this.statement = statement;
@@ -41,7 +41,7 @@ public class VariableCheckNull extends CaseOfInterest {
                         && binaryExpr.getRight().isNameExpr());
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isIfStmt = context.statement.isIfStmt();
         if (!isIfStmt) {
             return;
@@ -60,7 +60,7 @@ public class VariableCheckNull extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
         // Left empty
     }
 }

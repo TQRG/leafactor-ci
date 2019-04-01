@@ -1,6 +1,6 @@
 package com.leafactor.cli.rules;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -13,12 +13,15 @@ import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
+import com.leafactor.cli.engine.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+// TODO - Change to Iteration
 
 /**
  * Refactoring rule that undoes the Recycle anti-pattern
@@ -28,8 +31,10 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
     // List of classes that need to be recycled
     private Map<String, String> opportunities = new LinkedHashMap<>();
     private List<Predicate<MethodCallExpr>> exceptions = new ArrayList<>();
+    private IterationLogger logger;
 
-    public RecycleRefactoringRule() {
+    public RecycleRefactoringRule(IterationLogger logger) {
+        this.logger = logger;
         opportunities.put("TypedArray", "recycle");
         opportunities.put("Bitmap", "recycle");
         opportunities.put("Cursor", "close");
@@ -188,43 +193,6 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
     }
 
     /**
-     * Finds narrow inner scopes of BlockStmt
-     * @param root The root node for seaching
-     * @return A list of the inner scopes
-     */
-    private List<BlockStmt> findInnerScopes(Node root) {
-        return root.getChildNodes().stream()
-                .filter(BlockStmt.class::isInstance)
-                .map(node -> (BlockStmt) node)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Find the variable declaration narrow
-     *
-     * @param root The root node
-     * @return List of variable declarations nodes of type either TypeArray or Bitmap
-     */
-    private List<VariableDeclarator> findVariableDeclaratorNodes(Node root) {
-        return root.getChildNodes().stream()
-                .filter(ExpressionStmt.class::isInstance)
-                .map(element -> (ExpressionStmt) element)
-                .map(ExpressionStmt::getExpression)
-                .filter(VariableDeclarationExpr.class::isInstance)
-                .map(element -> (VariableDeclarationExpr) element)
-                .map(VariableDeclarationExpr::getVariables)
-                .flatMap(Collection::stream)
-                .filter(node -> node.getType().stream()
-                        .filter(ClassOrInterfaceType.class::isInstance)
-                        .map(element -> (ClassOrInterfaceType) element)
-                        .map(ClassOrInterfaceType::getName)
-                        .anyMatch(simpleName -> opportunities.keySet().contains(simpleName.getIdentifier())))
-                .collect(Collectors.toList());
-    }
-
-
-
-    /**
      * Finds every variable usage
      * @param root The root node
      * @param variableName The name of the variable to search
@@ -375,7 +343,7 @@ public class RecycleRefactoringRule extends VoidVisitorAdapter<Void> implements 
         String EOL = System.getProperty("line.separator");
 
         return LexicalPreservingPrinter.setup(
-                JavaParser.parseStatement(
+                StaticJavaParser.parseStatement(
                         String.format("if(%s != null) {" + EOL +
                                         baseTabPadding + tab + "%s.%s();" + EOL +
                                         baseTabPadding + "}" + EOL,

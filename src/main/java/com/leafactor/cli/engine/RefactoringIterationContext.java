@@ -1,9 +1,27 @@
 package com.leafactor.cli.engine;
 
-import java.util.Iterator;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.stmt.BlockStmt;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RefactoringIterationContext {
-    public IterationContext context;
     public int offset = 0;
-    public Iterator<CaseOfInterest> iterator;
+    public CaseOfInterest caseOfInterest;
+    public BlockStmt blockStmt;
+    public List<CaseOfInterest> caseOfInterests = new ArrayList<>();
+
+    public BlockStmt getClosestBlockStmtParent() {
+        return RefactoringRule.getClosestBlockStmtParent(blockStmt);
+    }
+
+    public ClassOrInterfaceDeclaration getClosestClassOrInterfaceDeclarationParent() {
+        return RefactoringRule.getClosestClassOrInterfaceDeclarationParent(blockStmt);
+    }
+
+    public MethodDeclaration getClosestMethodDeclarationParent() {
+        return RefactoringRule.getClosestMethodDeclarationParent(blockStmt);
+    }
 }

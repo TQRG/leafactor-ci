@@ -1,4 +1,4 @@
-package com.leafactor.cli.rules.DrawAllocationCasesOfInterest;
+package com.leafactor.cli.rules.GenericCasesOfInterest;
 
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.Expression;
@@ -8,15 +8,15 @@ import com.leafactor.cli.engine.IterationContext;
 import com.leafactor.cli.engine.RefactoringIterationContext;
 
 public class VariableDeclared extends CaseOfInterest {
-    Type variableType;
-    String variableName;
-    public VariableDeclared(Type variableType, String variableName, IterationContext context) {
+    private Type variableType;
+    private String variableName;
+    private VariableDeclared(Type variableType, String variableName, IterationContext context) {
         super(context);
         this.variableType = variableType;
         this.variableName = variableName;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -32,7 +32,7 @@ public class VariableDeclared extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
 
     }
 }

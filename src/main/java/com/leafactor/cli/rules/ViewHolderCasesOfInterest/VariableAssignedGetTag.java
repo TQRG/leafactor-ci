@@ -12,17 +12,17 @@ import java.util.Optional;
 public class VariableAssignedGetTag extends CaseOfInterest {
     String variableName;
     // assignExpr and variableDeclarator are mutual exclusive
-    AssignExpr assignExpr;
-    VariableDeclarator variableDeclarator;
-    Type castType;
-    public VariableAssignedGetTag(AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
+    private AssignExpr assignExpr;
+    private VariableDeclarator variableDeclarator;
+    private Type castType;
+    private VariableAssignedGetTag(AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
         this.assignExpr = assignExpr;
         this.castType = castType;
     }
 
-    public VariableAssignedGetTag(VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
+    private VariableAssignedGetTag(VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
         this.variableDeclarator = variableDeclarator;
@@ -36,7 +36,7 @@ public class VariableAssignedGetTag extends CaseOfInterest {
         return isFindViewByIdCall && takesOneArguments && validInstance;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -99,7 +99,7 @@ public class VariableAssignedGetTag extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
 
     }
 }

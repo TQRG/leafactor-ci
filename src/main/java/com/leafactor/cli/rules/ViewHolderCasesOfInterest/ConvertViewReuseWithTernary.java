@@ -11,15 +11,15 @@ import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 import java.util.Optional;
 
 public class ConvertViewReuseWithTernary extends CaseOfInterest {
-    String variableName;
+    private String variableName;
 
-    public ConvertViewReuseWithTernary(String variableName, IterationContext context) {
+    private ConvertViewReuseWithTernary(String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
     }
 
     private static boolean isConditionalInflateAssignment(ConditionalExpr conditionalExpr, IterationContext context) {
-        String argumentName = context.methodDeclaration.getParameter(1).getName().getIdentifier();
+        String argumentName = context.getClosestMethodDeclarationParent().getParameter(1).getName().getIdentifier();
         BinaryExpr binaryExpr = conditionalExpr.getCondition().asBinaryExpr();
 
         if (binaryExpr.getOperator() != BinaryExpr.Operator.EQUALS
@@ -62,7 +62,7 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
         return expressionA.asNameExpr().getNameAsString().equals(argumentName) && isInflateCall && takesTwoArguments && validInstance;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -99,7 +99,7 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
         // Left empty
     }
 }

@@ -1,7 +1,6 @@
 package com.leafactor.cli.engine;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.YamlPrinter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
@@ -61,8 +60,7 @@ public class CompilationUnitGroup {
     private String runFile(File file, List<RefactoringRule> refactoringRules) throws FileNotFoundException {
         System.out.println("FILE:" + file.getName());
         FileInputStream in = new FileInputStream(file);
-        JavaParser javaParser = new JavaParser();
-        CompilationUnit cuBefore = javaParser.parse(in);
+        CompilationUnit cuBefore = StaticJavaParser.parse(in);
         CompilationUnit cu = LexicalPreservingPrinter.setup(cuBefore);
         for(RefactoringRule rule : refactoringRules) {
             rule.apply(cu);
@@ -116,8 +114,7 @@ public class CompilationUnitGroup {
         Map<File, String> results = new HashMap<>();
         for(File file : this.files) {
             FileInputStream in = new FileInputStream(file);
-            JavaParser javaParser = new JavaParser();
-            CompilationUnit cu = LexicalPreservingPrinter.setup(javaParser.parse(in));
+            CompilationUnit cu = LexicalPreservingPrinter.setup(StaticJavaParser.parse(in));
             String outputContent = printer.output(cu);
             System.out.println("File: " + file.getName());
             System.out.println(Color.CYAN);

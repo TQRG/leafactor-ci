@@ -17,13 +17,13 @@ public class VariableAssignedInflator extends CaseOfInterest {
     // Other variable was reassigned with an inflated View
     // Consequence: We need to keep track of it
     String variableName;
-    public VariableAssignedInflator(String variableName, IterationContext context) {
+    private VariableAssignedInflator(String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
         // TODO - We need to check reuse of convertView
     }
 
@@ -35,7 +35,7 @@ public class VariableAssignedInflator extends CaseOfInterest {
         return isInflateCall && takesTwoArguments && validInstance;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;

@@ -3,6 +3,7 @@ package com.leafactor.cli.rules.WakeLockCasesOfInterest;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
@@ -10,14 +11,18 @@ import com.github.javaparser.ast.stmt.Statement;
 import com.leafactor.cli.engine.CaseOfInterest;
 import com.leafactor.cli.engine.IterationContext;
 import com.leafactor.cli.engine.RefactoringIterationContext;
+
+import java.util.List;
 import java.util.Optional;
 
 public class WakeLockAcquire extends CaseOfInterest {
-    String variableName;
+    private String variableName;
+    private Statement statement;
 
-    public WakeLockAcquire(String variableName, IterationContext context) {
+    private WakeLockAcquire(String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
+        this.statement = context.statement;
     }
 
     static private boolean isAcquireCall(MethodCallExpr methodCallExpr) {
@@ -27,7 +32,7 @@ public class WakeLockAcquire extends CaseOfInterest {
         return isFindViewByIdCall && takesOneArguments && validInstance;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -48,13 +53,12 @@ public class WakeLockAcquire extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
         // Todo - Check whether we have field declared with this name -> If not, declare
         // Todo - Check if we have a variable declared with this name
 
-        Statement currentStatement = refactoringIterationContext.context.statement;
-        Node root = currentStatement.getParentNode().orElse(currentStatement);
-        while (root.getParentNode().isPresent()) {
+        Node root = statement.getParentNode().orElse(statement);
+        while (!(root instanceof ClassOrInterfaceDeclaration) && root.getParentNode().isPresent()) {
             root = root.getParentNode().get();
         }
         if(!(root instanceof ClassOrInterfaceDeclaration)) {
@@ -76,8 +80,20 @@ public class WakeLockAcquire extends CaseOfInterest {
         });
 
         if(!hasField) {
-            // Todo - Create the field
+            FieldDeclaration fieldDeclaration = new FieldDeclaration();
+            VariableDeclarator variableDeclarator = new VariableDeclarator();
+            // Todo - Here should use the type of the declared variable instead o simply WakeLock
+            variableDeclarator.setType("WakeLock");
+            variableDeclarator.setName(variableName);
+            fieldDeclaration.addVariable(variableDeclarator);
+            classOrInterfaceDeclaration.addMember(fieldDeclaration);
         }
+        List<MethodDeclaration> methodDeclarationList = classOrInterfaceDeclaration.getMethods();
+        for(MethodDeclaration methodDeclaration : methodDeclarationList) {
 
+
+
+
+        }
     }
 }

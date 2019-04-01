@@ -1,6 +1,7 @@
 package com.leafactor.cli.rules.ViewHolderCasesOfInterest;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.*;
@@ -21,20 +22,20 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class VariableAssignedFindViewById extends CaseOfInterest {
-    String variableName;
+    private String variableName;
     // assignExpr and variableDeclarator are mutual exclusive
-    AssignExpr assignExpr;
-    VariableDeclarator variableDeclarator;
-    Type castType;
+    private AssignExpr assignExpr;
+    private VariableDeclarator variableDeclarator;
+    private Type castType;
 
-    public VariableAssignedFindViewById(AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
+    private VariableAssignedFindViewById(AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
         this.assignExpr = assignExpr;
         this.castType = castType;
     }
 
-    public VariableAssignedFindViewById(VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
+    private VariableAssignedFindViewById(VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
         super(context);
         this.variableName = variableName;
         this.variableDeclarator = variableDeclarator;
@@ -48,7 +49,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
         return isFindViewByIdCall && takesOneArguments && validInstance;
     }
 
-    public static void checkStatement(IterationContext context) {
+    public static void detect(IterationContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -110,14 +111,12 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
     }
 
     @Override
-    public void refactoringIteration(RefactoringIterationContext refactoringIterationContext) {
-        Optional<BlockStmt> optionalBlockStmt = this.container.getBody();
-        if (optionalBlockStmt.isPresent()) {
-            BlockStmt blockStmt = optionalBlockStmt.get();
-            String argumentName = refactoringIterationContext.context.methodDeclaration.getParameter(1).getName().getIdentifier();
-            Statement currentStatement = refactoringIterationContext.context.statement;
+    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+        BlockStmt blockStmt = refactoringIterationContext.getClosestBlockStmtParent();
+        if (blockStmt != null) {
+            String argumentName = refactoringIterationContext.getClosestMethodDeclarationParent().getParameter(1).getName().getIdentifier();
             // Regress to the root of the java document
-            Node root = currentStatement.getParentNode().orElse(currentStatement);
+            Node root = blockStmt.getParentNode().orElse(blockStmt);
             while (root.getParentNode().isPresent()) {
                 root = root.getParentNode().get();
             }
@@ -142,12 +141,12 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
 
             if (viewHolderItemClasses.size() == 0) {
                 System.out.println("View Holder Class not declared");
-                Optional<Node> optionalNode = refactoringIterationContext.context.methodDeclaration.getParentNode();
+                Optional<Node> optionalNode = refactoringIterationContext.getClosestMethodDeclarationParent().getParentNode();
                 if (optionalNode.isPresent() && optionalNode.get() instanceof ClassOrInterfaceDeclaration) {
                     ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) optionalNode.get();
                     String baseTabPaddingClass = baseTabPadding.substring(4);
                     BodyDeclaration viewHolderItemClass = LexicalPreservingPrinter.setup(
-                            JavaParser.parseBodyDeclaration(
+                            StaticJavaParser.parseBodyDeclaration(
                                     String.format(baseTabPaddingClass + "static class ViewHolderItem {" + EOL +
                                                     baseTabPaddingClass + tab + "%s %s;" + EOL +
                                                     baseTabPaddingClass + "}" + EOL,
@@ -175,7 +174,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
             //  -> ViewHolderItem class is created
             //  -> ViewHolderItem class has the variable we want to use
 
-            List<VariableAssignedGetTag> variableAssignedGetTagList = refactoringIterationContext.context.caseOfInterests.stream()
+            List<VariableAssignedGetTag> variableAssignedGetTagList = refactoringIterationContext.caseOfInterests.stream()
                     .filter((caseOfInterest) -> caseOfInterest instanceof VariableAssignedGetTag)
                     .map(VariableAssignedGetTag.class::cast)
                     .filter((caseOfInterest) -> caseOfInterest.getIndex() < getIndex())
@@ -191,7 +190,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
                 // GENERATES: ViewHolderItem viewHolderItem = (ViewHolderItem) convertView.getTag();
                 // Todo - Check if convertView could be null up to this point, if it could, it is necessary to make an additional condition refactoring
                 Statement viewHolderItemDeclaration = LexicalPreservingPrinter.setup(
-                        JavaParser.parseStatement(
+                        StaticJavaParser.parseStatement(
                                 String.format(
                                         baseTabPadding + "ViewHolderItem viewHolderItem = (ViewHolderItem) %s.getTag();",
                                         argumentName)));
@@ -212,7 +211,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
             } else {
                 initializer = variableDeclarator.getInitializer().get().toString();
             }
-            List<VariableCheckNull> variableCheckNullList = refactoringIterationContext.context.caseOfInterests.stream()
+            List<VariableCheckNull> variableCheckNullList = refactoringIterationContext.caseOfInterests.stream()
                     .filter((caseOfInterest) -> caseOfInterest instanceof VariableCheckNull)
                     .map(VariableCheckNull.class::cast).collect(Collectors.toList());
             final String viewHolderVariableNameFinal = viewHolderVariableName;
@@ -226,19 +225,16 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
                     BlockStmt blockStmt1 = ifStmt.getThenStmt().asBlockStmt();
                     // TODO - We should add the reference to the viewHolder field, and check if it is there already
                     IterationContext context = new IterationContext();
-                    context.methodDeclaration = refactoringIterationContext.context.methodDeclaration;
-                    context.container = null;
                     context.blockStmt = blockStmt1;
-                    context.iteratingRoot = iteratingRoot;
                     for (int i = 0; i < blockStmt1.getStatements().size(); i++) {
                         context.statement = blockStmt1.getStatements().get(i);
                         context.statementIndex = i;
-                        VariableAssignedFindViewById.checkStatement(context);
+                        VariableAssignedFindViewById.detect(context);
                     }
-                    if (!context.caseOfInterests.stream().anyMatch(caseOfInterest ->
+                    if (context.caseOfInterests.stream().noneMatch(caseOfInterest ->
                             ((VariableAssignedFindViewById) caseOfInterest).variableName.equals(variableName))) {
                         Statement viewHolderItemDeclaration = LexicalPreservingPrinter.setup(
-                                JavaParser.parseStatement(
+                                StaticJavaParser.parseStatement(
                                         String.format("%s.%s = %s;" + EOL,
                                                 viewHolderVariableName,
                                                 variableName,
@@ -249,7 +245,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
                 }
             } else {
                 Statement ifStmt = LexicalPreservingPrinter.setup(
-                        JavaParser.parseStatement(
+                        StaticJavaParser.parseStatement(
                                 String.format(baseTabPadding + "if(%s == null) {" + EOL +
                                                 baseTabPadding + tab + "%s = new ViewHolderItem();" + EOL +
                                                 baseTabPadding + tab + "%s.setTag(%s);" + EOL +
@@ -266,12 +262,12 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
                 refactoringIterationContext.offset += 1;
                 VariableCheckNull variableCheckNull1 = new VariableCheckNull(
                         viewHolderVariableName,
-                        refactoringIterationContext.context,
+                        null, // THIS WILL CAUSE PROBLEMS
                         ifStmt,
                         this.statementIndex,
                         this.statementIndex
                 );
-                refactoringIterationContext.context.caseOfInterests.add(this.statementIndex, variableCheckNull1);
+                refactoringIterationContext.caseOfInterests.add(this.statementIndex, variableCheckNull1);
             }
             // Here we substitute the call to findViewById to the viewHolder object field
             FieldAccessExpr fieldAccessExpr = new FieldAccessExpr();

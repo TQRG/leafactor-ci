@@ -2,6 +2,9 @@ package com.leafactor.cli.engine;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.stmt.BlockStmt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,4 +117,38 @@ public interface RefactoringRule {
                 ));
 
     }
+
+    static BlockStmt getClosestBlockStmtParent(Node node) {
+        Node root = node.getParentNode().orElse(node);
+        while (!(root instanceof BlockStmt) && root.getParentNode().isPresent()) {
+            root = root.getParentNode().get();
+        }
+        if(!(root instanceof BlockStmt)) {
+            return null;
+        }
+        return (BlockStmt)root;
+    }
+
+    static ClassOrInterfaceDeclaration getClosestClassOrInterfaceDeclarationParent(Node node) {
+        Node root = node.getParentNode().orElse(node);
+        while (!(root instanceof ClassOrInterfaceDeclaration) && root.getParentNode().isPresent()) {
+            root = root.getParentNode().get();
+        }
+        if(!(root instanceof ClassOrInterfaceDeclaration)) {
+            return null;
+        }
+        return (ClassOrInterfaceDeclaration)root;
+    }
+
+    static MethodDeclaration getClosestMethodDeclarationParent(Node node) {
+        Node root = node.getParentNode().orElse(node);
+        while (!(root instanceof MethodDeclaration) && root.getParentNode().isPresent()) {
+            root = root.getParentNode().get();
+        }
+        if(!(root instanceof MethodDeclaration)) {
+            return null;
+        }
+        return (MethodDeclaration)root;
+    }
+
 }

@@ -1,8 +1,10 @@
 package com.leafactor.cli.rules;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
+import com.leafactor.cli.engine.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +26,7 @@ class TestWakeLockHardCoded {
     public void dynamicTestsWithCollection() {
         togglePrints(false);
         // Dynamic rule instantiation
-        CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(JavaParser.parse(
+        CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(StaticJavaParser.parse(
                    "public class SimpleWakeLockWithoutOnPauseActivity extends Activity {\n" +
                         "        private PowerManager.WakeLock wl;\n" +
                         "\n" +
@@ -45,7 +47,8 @@ class TestWakeLockHardCoded {
                         "    }"
 
         ));
-        RefactoringRule rule = new WakeLockRefactoringRule();
+        IterationLogger logger = new IterationLogger();
+        RefactoringRule rule = new WakeLockRefactoringRule(logger);
 
         // Applying refactoring
         rule.apply(beforeCompilationUnit);

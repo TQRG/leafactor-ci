@@ -6,14 +6,10 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.nodeTypes.NodeWithOptionalBlockStmt;
-import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
-import com.leafactor.cli.engine.RefactoringRule;
+import com.leafactor.cli.engine.*;
+import com.leafactor.cli.rules.GenericCasesOfInterest.VariableDeclared;
 import com.leafactor.cli.rules.ViewHolderCasesOfInterest.*;
 
 import java.util.*;
@@ -21,11 +17,35 @@ import java.util.*;
 /**
  * Refactoring rule that applies the view holder pattern
  */
-public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
+public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule, Iteration {
 
     // TODO - Add other cases of interest:
     // TODO -> getTag()
     // TODO -> convertView == null
+    private IterationLogger logger;
+
+    public ViewHolderRefactoringRule(IterationLogger logger) {
+        this.logger = logger;
+    }
+
+    @Override
+    public void onSetup(IterationContext context) {}
+
+    @Override
+    public void onWillIterate(IterationContext context) {}
+
+    @Override
+    public void onDidIterate(IterationContext context) {}
+
+    @Override
+    public void onWillRefactor(List<CaseOfInterest> caseOfInterests) {}
+
+    @Override
+    public void onWillRefactorCase(RefactoringIterationContext context) {}
+
+    @Override
+    public void onDidRefactorCase(RefactoringIterationContext context) {}
+
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
         // public View getView(final int position, final View convertView, final ViewGroup parent)
@@ -34,7 +54,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         boolean returnTypeMatch = type.isClassOrInterfaceType() && type.asClassOrInterfaceType().getName()
                 .getIdentifier().equals("View");
 
-        boolean isPublic = methodDeclaration.getModifiers().contains(Modifier.PUBLIC);
+        boolean isPublic = methodDeclaration.getModifiers().contains(Modifier.publicModifier());
         boolean hasSameNumberOfArguments = methodDeclaration.getParameters().size() == 3;
         System.out.println("Name match: " + nameMatch);
         System.out.println("Is public: " + isPublic);
@@ -73,76 +93,29 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         return true;
     }
 
-
-    // This iteration can occur in inner blocks too
-    private void iterate(IterationContext context) {
-        if (context.statement instanceof NodeWithOptionalBlockStmt) {
-            IterationContext deeperContext = iterateWithNewContext(context.methodDeclaration, false, (NodeWithOptionalBlockStmt) context.statement);
-            iterate(deeperContext);
-            // Todo: do something with the deeperContext
-        }
-        ConvertViewReassignInflator.checkStatement(context);
-        ConvertViewReuseWithTernary.checkStatement(context);
-        VariableAssignedFindViewById.checkStatement(context);
-        VariableAssignedInflator.checkStatement(context);
-        VariableDeclared.checkStatement(context);
-        VariableCheckNull.checkStatement(context);
-        VariableAssignedGetTag.checkStatement(context);
-    }
-
-    private IterationContext iterateWithNewContext(MethodDeclaration methodDeclaration, boolean iteratingRoot, NodeWithOptionalBlockStmt currentStatement) {
-        Optional optionalBody = currentStatement.getBody();
-        if (optionalBody.isPresent() && optionalBody.get() instanceof BlockStmt) {
-            BlockStmt blockStmt = (BlockStmt) optionalBody.get();
-            IterationContext context = new IterationContext();
-            context.methodDeclaration = methodDeclaration;
-            context.container = currentStatement;
-            context.blockStmt = blockStmt;
-            context.iteratingRoot = iteratingRoot;
-            for (int i = 0; i < blockStmt.getStatements().size(); i++) {
-                context.statement = blockStmt.getStatements().get(i);
-                context.statementIndex = i;
-                iterate(context);
-            }
-            return context;
-        }
-        return null;
-    }
-
     private void refactor(MethodDeclaration methodDeclaration) {
         if (!methodSignatureMatches(methodDeclaration)) {
             System.out.println("Signature does not match");
             return;
         }
         System.out.println("Signature matches");
-        IterationContext context = iterateWithNewContext(methodDeclaration, true, methodDeclaration);
-        if(context == null) {
-            return;
-        }
-        RefactoringIterationContext refactoringIterationContext = new RefactoringIterationContext();
-        refactoringIterationContext.context = context;
-
-        List<CaseOfInterest> copy = new ArrayList<>();
-        copy.addAll(context.caseOfInterests);
-        Iterator<CaseOfInterest> iterator = copy.iterator();
-        refactoringIterationContext.iterator = iterator;
-        while(iterator.hasNext()) {
-            CaseOfInterest caseOfInterest = iterator.next();
-            caseOfInterest.refactoringIteration(refactoringIterationContext);
-        }
+        CaseDetector caseDetector = CaseDetector.CompileCaseDetector(
+                ConvertViewReassignInflator::detect,
+                ConvertViewReuseWithTernary::detect,
+                VariableAssignedFindViewById::detect,
+                VariableAssignedInflator::detect,
+                VariableDeclared::detect,
+                VariableCheckNull::detect,
+                VariableAssignedGetTag::detect
+        );
+        Iteration.iterateMethod(this, logger,methodDeclaration, this, caseDetector, false);
     }
 
     @Override
     public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, Void arg) {
-        boolean extendsActivity = classOrInterfaceDeclaration.getExtendedTypes().stream()
-                .anyMatch(classOrInterfaceType -> classOrInterfaceType.getNameAsString().equals("Activity"));
-        if(extendsActivity) {
-            Iterator<Node> iterator = classOrInterfaceDeclaration.getChildNodes().iterator();
-            while (iterator.hasNext()) {
-                Node node = iterator.next();
-                if (node instanceof MethodDeclaration) {
-                    refactor((MethodDeclaration) node);
-                }
+        for (Node node : classOrInterfaceDeclaration.getChildNodes()) {
+            if (node instanceof MethodDeclaration) {
+                refactor((MethodDeclaration) node);
             }
         }
         super.visit(classOrInterfaceDeclaration, arg);
