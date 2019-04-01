@@ -76,7 +76,7 @@ public class WakeLockAcquire extends CaseOfInterest {
         });
 
         if(!hasField) {
-
+            // Todo - Create the field
         }
 
     }

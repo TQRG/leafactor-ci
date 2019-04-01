@@ -20,10 +20,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class RuleTests {
+class TestRules {
     private static final PrintStream out = System.out;
     private static final PrintStream dummy = new PrintStream(new OutputStream() {@Override public void write(int b){} });
 
@@ -32,11 +31,11 @@ class RuleTests {
     }
 
     private String relativePathToAbsolutePath(String relativePath) {
-        return RuleTests.class.getResource(relativePath).getPath().substring(1);
+        return TestRules.class.getResource(relativePath).getPath().substring(1);
     }
 
     private String loadSample(String relativePath) throws IOException {
-        String absolutePath = RuleTests.class.getResource(relativePath).getPath().substring(1);
+        String absolutePath = TestRules.class.getResource(relativePath).getPath().substring(1);
         return new String(Files.readAllBytes(Paths.get(absolutePath)));
     }
 

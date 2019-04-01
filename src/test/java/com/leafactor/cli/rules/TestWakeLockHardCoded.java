@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class WakeLockTest {
+class TestWakeLockHardCoded {
     private static final PrintStream out = System.out;
     private static final PrintStream dummy = new PrintStream(new OutputStream() {@Override public void write(int b){} });
 
