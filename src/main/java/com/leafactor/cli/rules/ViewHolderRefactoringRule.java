@@ -134,11 +134,15 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
     @Override
     public void visit(ClassOrInterfaceDeclaration classOrInterfaceDeclaration, Void arg) {
-        Iterator<Node> iterator = classOrInterfaceDeclaration.getChildNodes().iterator();
-        while(iterator.hasNext()) {
-            Node node = iterator.next();
-            if(node instanceof MethodDeclaration) {
-                refactor((MethodDeclaration) node);
+        boolean extendsActivity = classOrInterfaceDeclaration.getExtendedTypes().stream()
+                .anyMatch(classOrInterfaceType -> classOrInterfaceType.getNameAsString().equals("Activity"));
+        if(extendsActivity) {
+            Iterator<Node> iterator = classOrInterfaceDeclaration.getChildNodes().iterator();
+            while (iterator.hasNext()) {
+                Node node = iterator.next();
+                if (node instanceof MethodDeclaration) {
+                    refactor((MethodDeclaration) node);
+                }
             }
         }
         super.visit(classOrInterfaceDeclaration, arg);

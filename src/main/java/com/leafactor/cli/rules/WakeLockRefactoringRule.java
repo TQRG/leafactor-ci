@@ -15,6 +15,8 @@ import com.leafactor.cli.engine.IterationContext;
 import com.leafactor.cli.engine.RefactoringIterationContext;
 import com.leafactor.cli.engine.RefactoringRule;
 import com.leafactor.cli.rules.ViewHolderCasesOfInterest.*;
+import com.leafactor.cli.rules.WakeLockCasesOfInterest.VariableDeclared;
+import com.leafactor.cli.rules.WakeLockCasesOfInterest.WakeLockAcquire;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,13 +24,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Refactoring rule that applies the view holder pattern
+ * Refactoring rule that applies the Wake lock pattern
  */
 public class WakeLockRefactoringRule extends VoidVisitorAdapter<Void> implements RefactoringRule {
-
-    // TODO - Add other cases of interest:
-    // TODO -> getTag()
-    // TODO -> convertView == null
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
         // public View getView(final int position, final View convertView, final ViewGroup parent)
@@ -84,7 +82,8 @@ public class WakeLockRefactoringRule extends VoidVisitorAdapter<Void> implements
             iterate(deeperContext);
             // Todo: do something with the deeperContext
         }
-        // TODO - do something
+        VariableDeclared.checkStatement(context);
+        WakeLockAcquire.checkStatement(context);
     }
 
     private IterationContext iterateWithNewContext(MethodDeclaration methodDeclaration, boolean iteratingRoot, NodeWithOptionalBlockStmt currentStatement) {
