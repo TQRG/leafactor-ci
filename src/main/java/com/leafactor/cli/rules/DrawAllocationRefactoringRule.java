@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.leafactor.cli.engine.*;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.DrawAllocationCasesOfInterest.ObjectAllocation;
 import com.leafactor.cli.rules.GenericCasesOfInterest.VariableDeclared;
 
@@ -29,22 +30,22 @@ public class DrawAllocationRefactoringRule extends VoidVisitorAdapter<Void> impl
     }
 
     @Override
-    public void onSetup(IterationContext context) {}
+    public void onSetup(DetectionPhaseContext context) {}
 
     @Override
-    public void onWillIterate(IterationContext context) {}
+    public void onWillIterate(DetectionPhaseContext context) {}
 
     @Override
-    public void onDidIterate(IterationContext context) {}
+    public void onDidIterate(DetectionPhaseContext context) {}
 
     @Override
     public void onWillRefactor(List<CaseOfInterest> caseOfInterests) {}
 
     @Override
-    public void onWillRefactorCase(RefactoringIterationContext context) {}
+    public void onWillRefactorCase(RefactoringPhaseContext context) {}
 
     @Override
-    public void onDidRefactorCase(RefactoringIterationContext context) {}
+    public void onDidRefactorCase(RefactoringPhaseContext context) {}
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
         // public View getView(final int position, final View convertView, final ViewGroup parent)

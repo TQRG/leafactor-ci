@@ -4,8 +4,8 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.Type;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 
 import java.util.Optional;
 
@@ -15,14 +15,14 @@ public class VariableAssignedGetTag extends CaseOfInterest {
     private AssignExpr assignExpr;
     private VariableDeclarator variableDeclarator;
     private Type castType;
-    private VariableAssignedGetTag(AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
+    private VariableAssignedGetTag(AssignExpr assignExpr, Type castType, String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
         this.assignExpr = assignExpr;
         this.castType = castType;
     }
 
-    private VariableAssignedGetTag(VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
+    private VariableAssignedGetTag(VariableDeclarator variableDeclarator, Type castType, String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
         this.variableDeclarator = variableDeclarator;
@@ -36,7 +36,7 @@ public class VariableAssignedGetTag extends CaseOfInterest {
         return isFindViewByIdCall && takesOneArguments && validInstance;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -65,7 +65,7 @@ public class VariableAssignedGetTag extends CaseOfInterest {
                     return;
                 }
                 String targetName = target.asNameExpr().getName().getIdentifier();
-                context.caseOfInterests.add(new VariableAssignedGetTag(assignExpr, castType.orElse(null), targetName, context));
+                context.caseOfInterestList.add(new VariableAssignedGetTag(assignExpr, castType.orElse(null), targetName, context));
             }
         } else if(expression.isVariableDeclarationExpr()) {
             for(VariableDeclarator variableDeclarator : expression.asVariableDeclarationExpr().getVariables()) {
@@ -92,14 +92,14 @@ public class VariableAssignedGetTag extends CaseOfInterest {
 
                 MethodCallExpr initializer = value.asMethodCallExpr();
                 if(isGetTagCall(initializer)) {
-                    context.caseOfInterests.add(new VariableAssignedGetTag(variableDeclarator, castType.orElse(null), variableName, context));
+                    context.caseOfInterestList.add(new VariableAssignedGetTag(variableDeclarator, castType.orElse(null), variableName, context));
                 }
             }
         }
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
 
     }
 }

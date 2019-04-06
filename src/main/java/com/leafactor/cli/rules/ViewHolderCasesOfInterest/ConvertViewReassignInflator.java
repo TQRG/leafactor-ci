@@ -2,20 +2,20 @@ package com.leafactor.cli.rules.ViewHolderCasesOfInterest;
 
 import com.github.javaparser.ast.expr.*;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 
 public class ConvertViewReassignInflator extends CaseOfInterest {
     private MethodCallExpr methodCallExpr;
     private AssignExpr assignExpr;
-    private ConvertViewReassignInflator(AssignExpr assignExpr, MethodCallExpr methodCallExpr, IterationContext context) {
+    private ConvertViewReassignInflator(AssignExpr assignExpr, MethodCallExpr methodCallExpr, DetectionPhaseContext context) {
         super(context);
         this.methodCallExpr = methodCallExpr;
         this.assignExpr = assignExpr;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -44,14 +44,14 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
             String argumentName = context.getClosestMethodDeclarationParent().getParameter(1).getName().getIdentifier();
             boolean assignedToConvertView = targetName.equals(argumentName);
             if (assignedToConvertView) {
-                context.caseOfInterests.add(new ConvertViewReassignInflator(assignExpr, methodCallExpr, context));
+                context.caseOfInterestList.add(new ConvertViewReassignInflator(assignExpr, methodCallExpr, context));
             }
         }
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
-        String argumentName = refactoringIterationContext.getClosestMethodDeclarationParent()
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
+        String argumentName = refactoringPhaseContext.getClosestMethodDeclarationParent()
                 .getParameter(1).getName().getIdentifier();
         // TODO - We do not know if the convertView was used up to this point, we might have something like:
             /*  if(convertView != null) {

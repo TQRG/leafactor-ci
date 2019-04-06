@@ -4,18 +4,18 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 
 public class VariableCheckNull extends CaseOfInterest {
 
     String variableName;
-    private VariableCheckNull(String variableName, IterationContext context) {
+    private VariableCheckNull(String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
     }
 
-    VariableCheckNull(String variableName, IterationContext context, Statement statement, int index, int statementIndex) {
+    VariableCheckNull(String variableName, DetectionPhaseContext context, Statement statement, int index, int statementIndex) {
         super(context);
         this.variableName = variableName;
         this.statement = statement;
@@ -23,7 +23,7 @@ public class VariableCheckNull extends CaseOfInterest {
         this.statementIndex = statementIndex;
     }
 
-    private static boolean isNullCondition(Expression conditionExpr, IterationContext context) {
+    private static boolean isNullCondition(Expression conditionExpr, DetectionPhaseContext context) {
         if(!conditionExpr.isBinaryExpr()) {
             return false;
         }
@@ -41,7 +41,7 @@ public class VariableCheckNull extends CaseOfInterest {
                         && binaryExpr.getRight().isNameExpr());
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isIfStmt = context.statement.isIfStmt();
         if (!isIfStmt) {
             return;
@@ -56,11 +56,11 @@ public class VariableCheckNull extends CaseOfInterest {
         } else {
             variableName = ifStmt.getCondition().asBinaryExpr().getRight().asNameExpr().getNameAsString();
         }
-        context.caseOfInterests.add(new VariableCheckNull(variableName, context));
+        context.caseOfInterestList.add(new VariableCheckNull(variableName, context));
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
         // Left empty
     }
 }

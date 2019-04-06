@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * A group of compilation units defined by a directory path
+ * Represents a group of compilation units defined by a list of files
  */
 public class CompilationUnitGroup {
     private List<File> files;
@@ -28,6 +28,11 @@ public class CompilationUnitGroup {
         files = new ArrayList<>();
     }
 
+    /**
+     * Adds a new file to the list of files that make up the compilation unit group
+     * @param file The file to add
+     * @throws IOException Thrown when there is IO exception
+     */
     public void add(File file) throws IOException {
         if(file.isDirectory()) {
             files.addAll(getDirectoryFiles(file));

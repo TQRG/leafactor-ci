@@ -9,8 +9,8 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.stmt.Statement;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +19,7 @@ public class WakeLockAcquire extends CaseOfInterest {
     private String variableName;
     private Statement statement;
 
-    private WakeLockAcquire(String variableName, IterationContext context) {
+    private WakeLockAcquire(String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
         this.statement = context.statement;
@@ -32,7 +32,7 @@ public class WakeLockAcquire extends CaseOfInterest {
         return isFindViewByIdCall && takesOneArguments && validInstance;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -47,13 +47,13 @@ public class WakeLockAcquire extends CaseOfInterest {
                     return;
                 }
                 String scopeName = scope.get().asNameExpr().getName().getIdentifier();
-                context.caseOfInterests.add(new WakeLockAcquire(scopeName, context));
+                context.caseOfInterestList.add(new WakeLockAcquire(scopeName, context));
             }
         }
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
         // Todo - Check whether we have field declared with this name -> If not, declare
         // Todo - Check if we have a variable declared with this name
 

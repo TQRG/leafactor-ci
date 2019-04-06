@@ -1,7 +1,7 @@
 package com.leafactor.cli;
 
 import com.leafactor.cli.engine.CompilationUnitGroup;
-import com.leafactor.cli.engine.IterationLogger;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;

@@ -3,7 +3,7 @@ package com.leafactor.cli.rules;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
-import com.leafactor.cli.engine.IterationLogger;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;

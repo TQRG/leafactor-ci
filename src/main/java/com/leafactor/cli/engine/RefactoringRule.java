@@ -6,9 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.BlockStmt;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,27 +20,6 @@ public interface RefactoringRule {
      * @param compilationUnit The compilation unit to which the rule will apply
      */
     void apply(CompilationUnit compilationUnit);
-
-
-    static boolean isParent(Node child, Node parent) {
-        Optional<Node> childParent = child.getParentNode();
-        return childParent.filter(node -> node.equals(parent) || isParent(node, parent)).isPresent();
-    }
-
-    static List<Node> regression(Node startNode, Predicate<Node> stopPredicate, Predicate<Node> isInteresting) {
-        Optional<Node> optionalParent = startNode.getParentNode();
-        if(!optionalParent.isPresent() || stopPredicate.test(optionalParent.get())) {
-            return List.of();
-        }
-        if(isInteresting.test(optionalParent.get())) {
-            return Stream.concat(
-                    List.of(optionalParent.get()).stream(),
-                    regression(optionalParent.get(), stopPredicate, isInteresting).stream()
-            ).collect(Collectors.toList());
-        }
-        return regression(optionalParent.get(), stopPredicate, isInteresting);
-    }
-
 
     /**
      * Finds a node of interest
@@ -88,36 +65,10 @@ public interface RefactoringRule {
     }
 
     /**
-     * Searches the AST to find the deepest outer and inner nodes that match the predicates given
-     * @param root The base node for searching
-     * @param outerValidator The outer node checker predicate
-     * @param innerValidator The inner node checker predicate
-     * @return The deepest outer node that matches the outerValidator and innerValidator or null
+     * The closest BlockStmt by bubbling up
+     * @param node The node from which to start
+     * @return The closest BlockStmt by bubbling up
      */
-    static Optional<Node> findOuterNodeOfInterest(Node root, Predicate<Node> outerValidator, Predicate<Node> innerValidator) {
-        if(root.getChildNodes().isEmpty()) {
-            return Optional.empty();
-        }
-
-        // First we process the ones that are not outer because we want the deepest outer nodes
-        Optional<Optional<Node>> optional = root.getChildNodes().stream()
-                .filter(node -> !outerValidator.test(node))
-                .map(node -> findOuterNodeOfInterest(node, outerValidator, innerValidator))
-                .filter(Optional::isPresent)
-                .findAny();
-
-        // If the deeper nodes were not able to find a matching outer and inner combo, we explore the outers
-        return optional.orElseGet(() -> root.getChildNodes().stream()
-                .filter(outerValidator)
-                .filter(node -> hasNodeOfInterest(node, innerValidator))
-                .findAny().or(() -> root.stream()
-                        .filter(outerValidator)
-                        .filter(node -> hasNodeOfInterest(node, innerValidator))
-                        .findAny()
-                ));
-
-    }
-
     static BlockStmt getClosestBlockStmtParent(Node node) {
         Node root = node.getParentNode().orElse(node);
         while (!(root instanceof BlockStmt) && root.getParentNode().isPresent()) {
@@ -129,6 +80,11 @@ public interface RefactoringRule {
         return (BlockStmt)root;
     }
 
+    /**
+     * The closest ClassOrInterfaceDeclaration by bubbling up
+     * @param node The node from which to start
+     * @return The closest ClassOrInterfaceDeclaration by bubbling up
+     */
     static ClassOrInterfaceDeclaration getClosestClassOrInterfaceDeclarationParent(Node node) {
         Node root = node.getParentNode().orElse(node);
         while (!(root instanceof ClassOrInterfaceDeclaration) && root.getParentNode().isPresent()) {
@@ -140,6 +96,11 @@ public interface RefactoringRule {
         return (ClassOrInterfaceDeclaration)root;
     }
 
+    /**
+     * The closest MethodDeclaration by bubbling up
+     * @param node The node from which to start
+     * @return The closest MethodDeclaration by bubbling up
+     */
     static MethodDeclaration getClosestMethodDeclarationParent(Node node) {
         Node root = node.getParentNode().orElse(node);
         while (!(root instanceof MethodDeclaration) && root.getParentNode().isPresent()) {
@@ -150,5 +111,4 @@ public interface RefactoringRule {
         }
         return (MethodDeclaration)root;
     }
-
 }

@@ -7,8 +7,8 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.type.Type;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 
 import java.util.Optional;
@@ -17,17 +17,17 @@ public class VariableAssignedInflator extends CaseOfInterest {
     // Other variable was reassigned with an inflated View
     // Consequence: We need to keep track of it
     String variableName;
-    private VariableAssignedInflator(String variableName, IterationContext context) {
+    private VariableAssignedInflator(String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
         // TODO - We need to check reuse of convertView
     }
 
-    private static boolean isInflateCall(MethodCallExpr methodCallExpr, IterationContext context) {
+    private static boolean isInflateCall(MethodCallExpr methodCallExpr, DetectionPhaseContext context) {
         boolean isInflateCall = methodCallExpr.getName().getIdentifier().equals("inflate");
         boolean takesTwoArguments = methodCallExpr.getArguments().size() == 2;
         boolean validInstance = methodCallExpr.getScope().isPresent()
@@ -35,7 +35,7 @@ public class VariableAssignedInflator extends CaseOfInterest {
         return isInflateCall && takesTwoArguments && validInstance;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -55,7 +55,7 @@ public class VariableAssignedInflator extends CaseOfInterest {
             if (!target.isNameExpr()) {
                 return;
             }
-            context.caseOfInterests.add(new VariableAssignedInflator(target.asNameExpr().getNameAsString(), context));
+            context.caseOfInterestList.add(new VariableAssignedInflator(target.asNameExpr().getNameAsString(), context));
 
         } else if(expression.isVariableDeclarationExpr()) {
             for(VariableDeclarator variableDeclarator : expression.asVariableDeclarationExpr().getVariables()) {
@@ -78,7 +78,7 @@ public class VariableAssignedInflator extends CaseOfInterest {
                 }
                 MethodCallExpr initializer = value.asMethodCallExpr();
                 if(isInflateCall(initializer, context)) {
-                    context.caseOfInterests.add(new VariableAssignedInflator(variableName, context));
+                    context.caseOfInterestList.add(new VariableAssignedInflator(variableName, context));
                 }
             }
         }

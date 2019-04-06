@@ -4,19 +4,19 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.type.Type;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 
 public class VariableDeclared extends CaseOfInterest {
     private Type variableType;
     private String variableName;
-    private VariableDeclared(Type variableType, String variableName, IterationContext context) {
+    private VariableDeclared(Type variableType, String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableType = variableType;
         this.variableName = variableName;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -26,13 +26,13 @@ public class VariableDeclared extends CaseOfInterest {
             for(VariableDeclarator variableDeclarator : expression.asVariableDeclarationExpr().getVariables()) {
                 String variableName = variableDeclarator.getNameAsString();
                 Type type = variableDeclarator.getType();
-                context.caseOfInterests.add(new VariableDeclared(type, variableName, context));
+                context.caseOfInterestList.add(new VariableDeclared(type, variableName, context));
             }
         }
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
 
     }
 }

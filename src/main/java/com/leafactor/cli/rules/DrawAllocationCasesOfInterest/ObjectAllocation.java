@@ -9,8 +9,8 @@ import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.Type;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 
 import java.util.Optional;
 
@@ -23,7 +23,7 @@ public class ObjectAllocation extends CaseOfInterest {
     private Type castType;
     private ClassOrInterfaceDeclaration classDeclaration;
 
-    ObjectAllocation(ClassOrInterfaceDeclaration classDeclaration, AssignExpr assignExpr, Type castType, String variableName, IterationContext context) {
+    private ObjectAllocation(ClassOrInterfaceDeclaration classDeclaration, AssignExpr assignExpr, Type castType, String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
         this.assignExpr = assignExpr;
@@ -31,7 +31,7 @@ public class ObjectAllocation extends CaseOfInterest {
         this.classDeclaration = classDeclaration;
     }
 
-    ObjectAllocation(ClassOrInterfaceDeclaration classDeclaration, boolean isClearable, VariableDeclarator variableDeclarator, Type castType, String variableName, IterationContext context) {
+    private ObjectAllocation(ClassOrInterfaceDeclaration classDeclaration, boolean isClearable, VariableDeclarator variableDeclarator, Type castType, String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
         this.variableDeclarator = variableDeclarator;
@@ -73,7 +73,7 @@ public class ObjectAllocation extends CaseOfInterest {
         return true;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -105,7 +105,7 @@ public class ObjectAllocation extends CaseOfInterest {
                     return;
                 }
                 String targetName = ((NodeWithSimpleName) target).getNameAsString();
-                context.caseOfInterests.add(
+                context.caseOfInterestList.add(
                         new ObjectAllocation(classOrInterfaceDeclaration,
                         assignExpr, castType.orElse(null), targetName, context));
             }
@@ -134,7 +134,7 @@ public class ObjectAllocation extends CaseOfInterest {
 
                 ObjectCreationExpr objectCreationExpr = value.asObjectCreationExpr();
                 if (isInterestingObjectAllocation(objectCreationExpr)) {
-                    context.caseOfInterests.add(new ObjectAllocation(
+                    context.caseOfInterestList.add(new ObjectAllocation(
                             classOrInterfaceDeclaration,
                             isClearable(objectCreationExpr.getType()),
                             variableDeclarator, castType.orElse(null), variableName, context));
@@ -144,7 +144,7 @@ public class ObjectAllocation extends CaseOfInterest {
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
         // Here we know that we do want to pull the declaration to another place
         if(assignExpr != null) {
             // todo - find the variable declaration and put the initialization code there
@@ -163,19 +163,19 @@ public class ObjectAllocation extends CaseOfInterest {
                 MethodCallExpr methodCallExpr = new MethodCallExpr();
                 methodCallExpr.setScope(new NameExpr(variableName));
                 methodCallExpr.setName(new SimpleName("clear"));
-                Statement lastStatement = refactoringIterationContext.blockStmt.getStatements()
-                        .get(refactoringIterationContext.blockStmt.getStatements().size() - 1);
+                Statement lastStatement = refactoringPhaseContext.blockStmt.getStatements()
+                        .get(refactoringPhaseContext.blockStmt.getStatements().size() - 1);
                 if(lastStatement.isReturnStmt()) {
-                    refactoringIterationContext.blockStmt.addStatement(
-                            refactoringIterationContext.blockStmt.getStatements().size() - 1,  new ExpressionStmt(methodCallExpr));
+                    refactoringPhaseContext.blockStmt.addStatement(
+                            refactoringPhaseContext.blockStmt.getStatements().size() - 1,  new ExpressionStmt(methodCallExpr));
                 } else {
-                    refactoringIterationContext.blockStmt.addStatement(new ExpressionStmt(methodCallExpr));
+                    refactoringPhaseContext.blockStmt.addStatement(new ExpressionStmt(methodCallExpr));
                 }
 
             }
             // Remove the statement
-            refactoringIterationContext.blockStmt.getStatements().remove(refactoringIterationContext.offset + statementIndex);
-            refactoringIterationContext.offset -= 1;
+            refactoringPhaseContext.blockStmt.getStatements().remove(refactoringPhaseContext.offset + statementIndex);
+            refactoringPhaseContext.offset -= 1;
         }
     }
 

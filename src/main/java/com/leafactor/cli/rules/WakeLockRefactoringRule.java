@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.leafactor.cli.engine.*;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.GenericCasesOfInterest.VariableDeclared;
 import com.leafactor.cli.rules.WakeLockCasesOfInterest.WakeLockAcquire;
 
@@ -23,22 +24,22 @@ public class WakeLockRefactoringRule extends VoidVisitorAdapter<Void> implements
     }
 
     @Override
-    public void onSetup(IterationContext context) {}
+    public void onSetup(DetectionPhaseContext context) {}
 
     @Override
-    public void onWillIterate(IterationContext context) {}
+    public void onWillIterate(DetectionPhaseContext context) {}
 
     @Override
-    public void onDidIterate(IterationContext context) {}
+    public void onDidIterate(DetectionPhaseContext context) {}
 
     @Override
     public void onWillRefactor(List<CaseOfInterest> caseOfInterests) {}
 
     @Override
-    public void onWillRefactorCase(RefactoringIterationContext context) {}
+    public void onWillRefactorCase(RefactoringPhaseContext context) {}
 
     @Override
-    public void onDidRefactorCase(RefactoringIterationContext context) {}
+    public void onDidRefactorCase(RefactoringPhaseContext context) {}
 
     private void refactor(MethodDeclaration methodDeclaration) {
         System.out.println("Signature matches");

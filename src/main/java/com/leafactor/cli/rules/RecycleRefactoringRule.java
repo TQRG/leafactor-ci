@@ -13,7 +13,7 @@ import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
-import com.leafactor.cli.engine.IterationLogger;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 
 import java.util.*;

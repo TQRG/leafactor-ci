@@ -4,8 +4,8 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.Type;
 import com.leafactor.cli.engine.CaseOfInterest;
-import com.leafactor.cli.engine.IterationContext;
-import com.leafactor.cli.engine.RefactoringIterationContext;
+import com.leafactor.cli.engine.DetectionPhaseContext;
+import com.leafactor.cli.engine.RefactoringPhaseContext;
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 
 import java.util.Optional;
@@ -13,12 +13,12 @@ import java.util.Optional;
 public class ConvertViewReuseWithTernary extends CaseOfInterest {
     private String variableName;
 
-    private ConvertViewReuseWithTernary(String variableName, IterationContext context) {
+    private ConvertViewReuseWithTernary(String variableName, DetectionPhaseContext context) {
         super(context);
         this.variableName = variableName;
     }
 
-    private static boolean isConditionalInflateAssignment(ConditionalExpr conditionalExpr, IterationContext context) {
+    private static boolean isConditionalInflateAssignment(ConditionalExpr conditionalExpr, DetectionPhaseContext context) {
         String argumentName = context.getClosestMethodDeclarationParent().getParameter(1).getName().getIdentifier();
         BinaryExpr binaryExpr = conditionalExpr.getCondition().asBinaryExpr();
 
@@ -62,7 +62,7 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
         return expressionA.asNameExpr().getNameAsString().equals(argumentName) && isInflateCall && takesTwoArguments && validInstance;
     }
 
-    public static void detect(IterationContext context) {
+    public static void detect(DetectionPhaseContext context) {
         boolean isExpressionStmt = context.statement.isExpressionStmt();
         if (!isExpressionStmt) {
             return;
@@ -77,7 +77,7 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
                 if (!target.isNameExpr()) {
                     return;
                 }
-                context.caseOfInterests.add(new ConvertViewReuseWithTernary(target.asNameExpr().getNameAsString(), context));
+                context.caseOfInterestList.add(new ConvertViewReuseWithTernary(target.asNameExpr().getNameAsString(), context));
             }
         } else if (expression.isVariableDeclarationExpr()) {
             for (VariableDeclarator variableDeclarator : expression.asVariableDeclarationExpr().getVariables()) {
@@ -92,14 +92,14 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
                 }
                 ConditionalExpr conditionalExpr = optionalInitializer.get().asConditionalExpr();
                 if (isConditionalInflateAssignment(conditionalExpr, context)) {
-                    context.caseOfInterests.add(new ConvertViewReuseWithTernary(variableName, context));
+                    context.caseOfInterestList.add(new ConvertViewReuseWithTernary(variableName, context));
                 }
             }
         }
     }
 
     @Override
-    public void refactorIteration(RefactoringIterationContext refactoringIterationContext) {
+    public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
         // Left empty
     }
 }

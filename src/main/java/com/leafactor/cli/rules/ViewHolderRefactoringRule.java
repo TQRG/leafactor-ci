@@ -9,6 +9,7 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.leafactor.cli.engine.*;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.GenericCasesOfInterest.VariableDeclared;
 import com.leafactor.cli.rules.ViewHolderCasesOfInterest.*;
 
@@ -29,22 +30,22 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
     }
 
     @Override
-    public void onSetup(IterationContext context) {}
+    public void onSetup(DetectionPhaseContext context) {}
 
     @Override
-    public void onWillIterate(IterationContext context) {}
+    public void onWillIterate(DetectionPhaseContext context) {}
 
     @Override
-    public void onDidIterate(IterationContext context) {}
+    public void onDidIterate(DetectionPhaseContext context) {}
 
     @Override
     public void onWillRefactor(List<CaseOfInterest> caseOfInterests) {}
 
     @Override
-    public void onWillRefactorCase(RefactoringIterationContext context) {}
+    public void onWillRefactorCase(RefactoringPhaseContext context) {}
 
     @Override
-    public void onDidRefactorCase(RefactoringIterationContext context) {}
+    public void onDidRefactorCase(RefactoringPhaseContext context) {}
 
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
@@ -87,7 +88,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
         return false;
     }
 
-    static public boolean checkDeclaredLayoutInflator(IterationContext context, NameExpr nameExpr) {
+    static public boolean checkDeclaredLayoutInflator(DetectionPhaseContext context, NameExpr nameExpr) {
         // TODO - backtrack to find if the layout inflator was declared
         // Returning true because we might want to implement this last
         return true;
