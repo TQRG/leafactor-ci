@@ -31,18 +31,9 @@ class TestRules {
         System.setOut(on?out:dummy);
     }
 
-    private String relativePathToAbsolutePath(String relativePath) {
-        return TestRules.class.getResource(relativePath).getPath().substring(1);
-    }
-
-    private String loadSample(String relativePath) throws IOException {
-        String absolutePath = TestRules.class.getResource(relativePath).getPath().substring(1);
-        return new String(Files.readAllBytes(Paths.get(absolutePath)));
-    }
-
     @TestFactory
     Collection<DynamicTest> dynamicTestsWithCollection() throws IOException {
-        String dir = relativePathToAbsolutePath("./");
+        String dir = TestRules.class.getResource("./").getPath().substring(1);
         try (Stream<Path> paths = Files.walk(Paths.get(dir))) {
             return paths
                     .filter((file) -> !file.equals(Paths.get(dir)))
@@ -89,7 +80,6 @@ class TestRules {
                     .filter(Objects::nonNull)
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
-
         }
     }
 

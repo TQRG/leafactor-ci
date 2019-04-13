@@ -49,6 +49,7 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
 
     private boolean methodSignatureMatches(MethodDeclaration methodDeclaration) {
+        // SIGNATURE:
         // public View getView(final int position, final View convertView, final ViewGroup parent)
         boolean nameMatch = methodDeclaration.getNameAsString().equals("getView");
         Type type = methodDeclaration.getType();
@@ -57,9 +58,6 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
         boolean isPublic = methodDeclaration.getModifiers().contains(Modifier.publicModifier());
         boolean hasSameNumberOfArguments = methodDeclaration.getParameters().size() == 3;
-        System.out.println("Name match: " + nameMatch);
-        System.out.println("Is public: " + isPublic);
-        System.out.println("Same Number of arguments: " + hasSameNumberOfArguments);
         if (hasSameNumberOfArguments) {
             Type firstArgumentType = methodDeclaration.getParameter(0).getType();
             boolean firstArgumentTypeMatches = firstArgumentType.isPrimitiveType() &&
@@ -72,10 +70,6 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
             Type thirdArgumentType = methodDeclaration.getParameter(2).getType();
             boolean thirdArgumentTypeMatches = thirdArgumentType.isClassOrInterfaceType() &&
                     thirdArgumentType.asClassOrInterfaceType().getName().getIdentifier().equals("ViewGroup");
-
-            System.out.println("First argument type matches: " + firstArgumentTypeMatches);
-            System.out.println("Second argument type matches: " + secondArgumentTypeMatches);
-            System.out.println("Third argument type matches: " + thirdArgumentTypeMatches);
 
             return isPublic &&
                     nameMatch &&
@@ -96,10 +90,8 @@ public class ViewHolderRefactoringRule extends VoidVisitorAdapter<Void> implemen
 
     private void refactor(MethodDeclaration methodDeclaration) {
         if (!methodSignatureMatches(methodDeclaration)) {
-            System.out.println("Signature does not match");
             return;
         }
-        System.out.println("Signature matches");
         CaseDetector caseDetector = CaseDetector.CompileCaseDetector(
                 ConvertViewReassignInflator::detect,
                 ConvertViewReuseWithTernary::detect,

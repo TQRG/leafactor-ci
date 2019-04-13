@@ -10,7 +10,7 @@ import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.GenericCasesOfInterest.VariableDeclared;
 import com.leafactor.cli.rules.WakeLockCasesOfInterest.WakeLockAcquire;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Refactoring rule that applies the Wake lock pattern
@@ -55,11 +55,23 @@ public class WakeLockRefactoringRule extends VoidVisitorAdapter<Void> implements
         boolean extendsActivity = classOrInterfaceDeclaration.getExtendedTypes().stream()
                 .anyMatch(classOrInterfaceType -> classOrInterfaceType.getNameAsString().equals("Activity"));
         if(extendsActivity) {
-            for (Node node : classOrInterfaceDeclaration.getChildNodes()) {
-                if (node instanceof MethodDeclaration) {
-                    refactor((MethodDeclaration) node);
-                }
-            }
+            boolean done = false;
+            Set<Node> nodesVisited = new HashSet<>();
+            do {
+                List<Node> nodes = new ArrayList<>(classOrInterfaceDeclaration.getChildNodes());
+                nodes.removeIf(nodesVisited::contains);
+
+                try {
+                    for (Node node : nodes) {
+                        if (node instanceof MethodDeclaration) {
+                            refactor((MethodDeclaration) node);
+                        }
+                        nodesVisited.add(node);
+                    }
+                    done = true;
+                } catch(ConcurrentModificationException ignored) { }
+            } while(!done);
+
         }
         super.visit(classOrInterfaceDeclaration, arg);
     }

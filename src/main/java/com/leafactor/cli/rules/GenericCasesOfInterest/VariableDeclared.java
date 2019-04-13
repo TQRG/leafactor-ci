@@ -35,4 +35,12 @@ public class VariableDeclared extends CaseOfInterest {
     public void refactorIteration(RefactoringPhaseContext refactoringPhaseContext) {
 
     }
+
+    public Type getVariableType() {
+        return variableType;
+    }
+
+    public String getVariableName() {
+        return variableName;
+    }
 }

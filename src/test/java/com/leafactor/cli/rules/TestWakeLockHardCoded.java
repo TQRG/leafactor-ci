@@ -7,7 +7,6 @@ import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
 import org.junit.jupiter.api.Test;
 
-
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -27,7 +26,6 @@ class TestWakeLockHardCoded {
         // Dynamic rule instantiation
         CompilationUnit beforeCompilationUnit = LexicalPreservingPrinter.setup(StaticJavaParser.parse(
                    "public class SimpleWakeLockWithoutOnPauseActivity extends Activity {\n" +
-                        "        private PowerManager.WakeLock wl;\n" +
                         "\n" +
                         "        @Override\n" +
                         "        protected void onCreate(Bundle savedInstanceState) {\n" +
@@ -43,6 +41,10 @@ class TestWakeLockHardCoded {
                         "            wl.release();\n" +
                         "            super.onDestroy();\n" +
                         "        }\n" +
+                        "\n" +
+                        "        @Override() protected void onPause(){\n" +
+                        "            super.onPause();\n" +
+                        "        }\n" +
                         "    }"
 
         ));
@@ -56,14 +58,14 @@ class TestWakeLockHardCoded {
         togglePrints(true);
         String expected =
                 "public class SimpleWakeLockWithoutOnPauseActivity extends Activity {\n" +
-                        "        private PowerManager.WakeLock wl;\n" +
+                        "        private WakeLock wl;\n" +
                         "\n" +
                         "        @Override\n" +
                         "        protected void onCreate(Bundle savedInstanceState) {\n" +
                         "            super.onCreate(savedInstanceState);\n" +
                         "\n" +
                         "            PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);\n" +
-                        "            WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, \"WakeLockSample\");\n" +
+                        "            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, \"WakeLockSample\");\n" +
                         "            wl.acquire();\n" +
                         "        }\n" +
                         "\n" +
