@@ -76,12 +76,12 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-symbol-solver-core</artifactId>
-            <version>3.13.4</version>
+            <version>3.13.6</version>
         </dependency>
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.13.4</version>
+            <version>3.13.6</version>
         </dependency>
         <dependency>
             <groupId>io.github.java-diff-utils</groupId>

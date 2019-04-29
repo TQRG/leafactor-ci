@@ -58,29 +58,29 @@ class TestWakeLockHardCoded {
         togglePrints(true);
         String expected =
                 "public class SimpleWakeLockWithoutOnPauseActivity extends Activity {\n" +
-                        "        private WakeLock wl;\n" +
-                        "\n" +
-                        "        @Override\n" +
-                        "        protected void onCreate(Bundle savedInstanceState) {\n" +
-                        "            super.onCreate(savedInstanceState);\n" +
-                        "\n" +
-                        "            PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);\n" +
-                        "            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, \"WakeLockSample\");\n" +
-                        "            wl.acquire();\n" +
-                        "        }\n" +
-                        "\n" +
-                        "        @Override\n" +
-                        "        public void onDestroy(){\n" +
-                        "            super.onDestroy();\n" +
-                        "        }\n" +
-                        "\n" +
-                        "        @Override() protected void onPause(){\n" +
-                        "            super.onPause();\n" +
-                        "            if (!wl.isHeld()) {\n" +
-                        "                wl.release();\n" +
-                        "            }\n" +
-                        "        }\n" +
-                        "    }";
+                "        private WakeLock wl;\n" +
+                "\n" +
+                "        @Override\n" +
+                "        protected void onCreate(Bundle savedInstanceState) {\n" +
+                "            super.onCreate(savedInstanceState);\n" +
+                "\n" +
+                "            PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);\n" +
+                "            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, \"WakeLockSample\");\n" +
+                "            wl.acquire();\n" +
+                "        }\n" +
+                "\n" +
+                "        @Override\n" +
+                "        public void onDestroy(){\n" +
+                "            super.onDestroy();\n" +
+                "        }\n" +
+                "\n" +
+                "        @Override() protected void onPause(){\n" +
+                "            super.onPause();\n" +
+                "            if (!wl.isHeld()) {\n" +
+                "                wl.release();\n" +
+                "            }\n" +
+                "        }\n" +
+                "    }";
 
         // Compare result with the sample
         assertEquals(expected, result);
