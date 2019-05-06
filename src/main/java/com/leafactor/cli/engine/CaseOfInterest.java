@@ -1,6 +1,6 @@
 package com.leafactor.cli.engine;
 
-import com.github.javaparser.ast.stmt.Statement;
+import spoon.reflect.code.CtStatement;
 
 /**
  * Represents a case of interest found in a given statement
@@ -8,10 +8,11 @@ import com.github.javaparser.ast.stmt.Statement;
 public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
     protected int index; // Order
     protected int statementIndex;
-    protected Statement statement;
+    protected CtStatement statement;
 
     /**
      * Constructor
+     *
      * @param context The iteration context
      */
     public CaseOfInterest(DetectionPhaseContext context) {
@@ -21,13 +22,8 @@ public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
     }
 
     /**
-     * Applies a refactoring using the refactoring iteration context
-     * @param refactoringPhaseContext The refactoring iteration context
-     */
-    public abstract void refactorIteration(RefactoringPhaseContext refactoringPhaseContext);
-
-    /**
      * Compares the instance with another case of interest based on their indexes
+     *
      * @param caseOfInterest The case of interest
      * @return Comparison value representing the order of the instances
      */
@@ -41,6 +37,7 @@ public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
 
     /**
      * Getter for the index
+     *
      * @return The index that represents order
      */
     public int getIndex() {
@@ -49,6 +46,7 @@ public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
 
     /**
      * Getter for the statement index
+     *
      * @return The index of the statement for this case of interest
      */
     public int getStatementIndex() {
@@ -57,9 +55,10 @@ public abstract class CaseOfInterest implements Comparable<CaseOfInterest> {
 
     /**
      * Getter for the statement
+     *
      * @return The statement where this case of interest was discovered
      */
-    public Statement getStatement() {
+    public CtStatement getStatement() {
         return statement;
     }
 

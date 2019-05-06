@@ -1,13 +1,12 @@
 package com.leafactor.cli.engine;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.printer.YamlPrinter;
-import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
-import com.leafactor.cli.utility.Color;
+import spoon.Launcher;
+import spoon.compiler.Environment;
+import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,11 +29,12 @@ public class CompilationUnitGroup {
 
     /**
      * Adds a new file to the list of files that make up the compilation unit group
+     *
      * @param file The file to add
      * @throws IOException Thrown when there is IO exception
      */
     public void add(File file) throws IOException {
-        if(file.isDirectory()) {
+        if (file.isDirectory()) {
             files.addAll(getDirectoryFiles(file));
         } else {
             files.add(file);
@@ -43,6 +43,7 @@ public class CompilationUnitGroup {
 
     /**
      * Returns the Java files in the directory as alist
+     *
      * @return A list of Java files
      * @throws IOException Thrown when there is IO exception
      */
@@ -57,29 +58,41 @@ public class CompilationUnitGroup {
 
     /**
      * Executes a refactoring job for a list of refacoring rules over a given .java file
-     * @param file Java file provided (.java)
+     *
+     * @param file             Java file provided (.java)
      * @param refactoringRules List of refactoring rules
      * @return The entire refactored result file content  as a string
      * @throws FileNotFoundException Thrown when the file is not found
      */
-    private String runFile(File file, List<RefactoringRule> refactoringRules) throws FileNotFoundException {
+    private String runFile(File file, List<RefactoringRule> refactoringRules) throws IOException {
         System.out.println("FILE:" + file.getName());
         FileInputStream in = new FileInputStream(file);
-        CompilationUnit cuBefore = StaticJavaParser.parse(in);
-        CompilationUnit cu = LexicalPreservingPrinter.setup(cuBefore);
-        for(RefactoringRule rule : refactoringRules) {
-            rule.apply(cu);
+        final Launcher launcher = new Launcher();
+        final Environment e = launcher.getEnvironment();
+        e.setLevel("INFO");
+        e.setNoClasspath(true);
+        e.setAutoImports(true);
+        launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment()));
+        launcher.addInputResource(file.getAbsolutePath());
+        for (RefactoringRule rule : refactoringRules) {
+            launcher.addProcessor(rule);
         }
-        return LexicalPreservingPrinter.print(cu);
+        // TODO - Set the source output directory correctly
+        Path tempDir = Files.createTempDirectory("temporary-output");
+        launcher.setSourceOutputDirectory(tempDir.toFile());
+        launcher.run();
+        // TODO - load the resulting content and return it.
+        return "";
     }
 
     /**
      * Persists a set of files with the corresponding results (string) through a map
+     *
      * @param results A Map where each key is a java File and a string is the content
      * @throws FileNotFoundException Thrown when a file is not found
      */
     private void persist(Map<File, String> results) throws FileNotFoundException {
-        for(File file : results.keySet()) {
+        for (File file : results.keySet()) {
             PrintWriter pw = new PrintWriter(file);
             pw.println(results.get(file));
             pw.close();
@@ -88,47 +101,24 @@ public class CompilationUnitGroup {
 
     /**
      * Executes a refactoring job with a list of refactoring rules over the directory
+     *
      * @param refactoringRules A list of refactoring rules
      * @throws IOException Thrown when there is IO exception
      */
     public void run(List<RefactoringRule> refactoringRules) throws IOException {
-        if(refactoringRules == null) {
+        if (refactoringRules == null) {
             throw new RuntimeException("The refactoring rules list cannot be null");
         }
-        if(refactoringRules.size() == 0) {
+        if (refactoringRules.size() == 0) {
             throw new RuntimeException("The refactoring rules list cannot be empty");
         }
 
         // We save the result, we want to persist only if every file is successfully refactored
         Map<File, String> results = new HashMap<>();
-        for(File file : this.files) {
+        for (File file : this.files) {
             results.put(file, this.runFile(file, refactoringRules));
         }
         // Lets persist all the files that we changed
-        this.persist(results);
-    }
-
-    /**
-     * Prints the Abstract Syntax Tree as a .yml file for every Java file in the directory
-     * @throws IOException Thrown when there is IO exception
-     */
-    public void printYaml() throws IOException {
-        System.out.println("PRINTING YAML FILES");
-        YamlPrinter printer = new YamlPrinter(true);
-        // We save the result, we want to persist only if every file is successfully refactored
-        Map<File, String> results = new HashMap<>();
-        for(File file : this.files) {
-            FileInputStream in = new FileInputStream(file);
-            CompilationUnit cu = LexicalPreservingPrinter.setup(StaticJavaParser.parse(in));
-            String outputContent = printer.output(cu);
-            System.out.println("File: " + file.getName());
-            System.out.println(Color.CYAN);
-            System.out.println(outputContent);
-            System.out.println(Color.RESET);
-            File output = new File(file.getParent() + "/" +
-                    file.getName().substring(0, file.getName().lastIndexOf(".java")) + ".yml");
-            results.put(output, outputContent);
-        }
         this.persist(results);
     }
 }

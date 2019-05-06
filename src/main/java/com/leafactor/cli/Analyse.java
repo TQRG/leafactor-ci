@@ -6,9 +6,9 @@ import picocli.CommandLine.Parameters;
 
 import java.io.File;
 
-@CommandLine.Command(name = "example",  mixinStandardHelpOptions = true, version = "Picocli example 3.0")
+@CommandLine.Command(name = "example", mixinStandardHelpOptions = true, version = "Picocli example 3.0")
 public class Analyse implements Runnable {
-    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Helpful for troubleshooting. " +
+    @Option(names = {"-v", "--verbose"}, description = "Verbose mode. Helpful for troubleshooting. " +
             "Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
