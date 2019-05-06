@@ -18,6 +18,7 @@ public class IterationLogger {
 
     /**
      * Gets a reference to the list of logs
+     *
      * @return A reference to the list of logs
      */
     public List<IterationLogEntry> getLogs() {

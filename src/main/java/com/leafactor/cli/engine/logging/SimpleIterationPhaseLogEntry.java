@@ -18,8 +18,9 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Constructor
-     * @param rule The rule that was applied in the iteration
-     * @param name The name of the log entry
+     *
+     * @param rule        The rule that was applied in the iteration
+     * @param name        The name of the log entry
      * @param description The description of the log entry
      */
     public SimpleIterationPhaseLogEntry(RefactoringRule rule, String name, String description) {
@@ -47,6 +48,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the refactoring rule
+     *
      * @return The refactoring rule that was applied
      */
     @Override
@@ -56,6 +58,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the name of the entry
+     *
      * @return The name of the entry
      */
     @Override
@@ -65,6 +68,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the description of the entry
+     *
      * @return The description of the entry
      */
     @Override
@@ -74,6 +78,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the timestamp of the entry, which is the timestamp of the start of the phase
+     *
      * @return The timestamp of the entry, which is the timestamp of the start of the phase
      */
     @Override
@@ -83,6 +88,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the timestamp of the start of the phase
+     *
      * @return The timestamp of the start of the phase
      */
     @Override
@@ -92,6 +98,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the timestamp of the end of the phase
+     *
      * @return The timestamp of the end of the phase
      */
     @Override
@@ -101,6 +108,7 @@ public class SimpleIterationPhaseLogEntry implements IterationPhaseLogEntry {
 
     /**
      * Getter for the elapsed time between the start and the end of the phase
+     *
      * @return The elapsed time between the start and the end of the phase
      */
     @Override

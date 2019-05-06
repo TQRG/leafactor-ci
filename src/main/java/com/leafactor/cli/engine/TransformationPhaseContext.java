@@ -1,6 +1,7 @@
 package com.leafactor.cli.engine;
 
 import spoon.reflect.code.CtBlock;
+import spoon.reflect.code.CtStatement;
 import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtMethod;
 
@@ -8,13 +9,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the iteration context of the refactoring phase
+ * Represents the context of an iteration detection phase
  */
-public class RefactoringPhaseContext {
-    public int offset = 0;
-    public CaseOfInterest caseOfInterest;
+public class TransformationPhaseContext {
     public CtBlock block;
-    public List<CaseOfInterest> caseOfInterests = new ArrayList<>();
+    public int statementIndex;
+    public CtStatement statement;
+    public CaseOfInterest caseOfInterest;
+    public List<CaseOfInterest> caseOfInterestList = new ArrayList<>();
+    private List<CaseOfInterest> transformedCaseOfInterestList = new ArrayList<>();
+
+    /**
+     * Accepts the case for the refactoring phase
+     */
+    public void accept(CaseOfInterest caseOfInterest) {
+        if(!transformedCaseOfInterestList.contains(caseOfInterest)) {
+            transformedCaseOfInterestList.add(caseOfInterest);
+        }
+    }
+
+    public List<CaseOfInterest> getResult() {
+        return new ArrayList<>(transformedCaseOfInterestList);
+    }
 
     /**
      * The closest Block by bubbling up

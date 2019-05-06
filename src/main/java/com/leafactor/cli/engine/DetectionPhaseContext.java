@@ -1,9 +1,9 @@
 package com.leafactor.cli.engine;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.Statement;
+import spoon.reflect.code.CtBlock;
+import spoon.reflect.code.CtStatement;
+import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,32 +12,35 @@ import java.util.List;
  * Represents the context of an iteration detection phase
  */
 public class DetectionPhaseContext {
-    public BlockStmt blockStmt;
+    public CtBlock block;
     public int statementIndex;
-    public Statement statement;
+    public CtStatement statement;
     public List<CaseOfInterest> caseOfInterestList = new ArrayList<>();
 
     /**
-     * The closest BlockStmt by bubbling up
-     * @return The closest BlockStmt by bubbling up
+     * The closest Block by bubbling up
+     *
+     * @return The closest Block by bubbling up
      */
-    public BlockStmt getClosestBlockStmtParent() {
-        return RefactoringRule.getClosestBlockStmtParent(blockStmt);
+    public CtBlock getClosestBlockParent() {
+        return RefactoringRule.getClosestBlockParent(block);
     }
 
     /**
-     * The closest ClassOrInterfaceDeclaration by bubbling up
-     * @return The closest ClassOrInterfaceDeclaration by bubbling up
+     * The closest Class by bubbling up
+     *
+     * @return The closest Class by bubbling up
      */
-    public ClassOrInterfaceDeclaration getClosestClassOrInterfaceDeclarationParent() {
-        return RefactoringRule.getClosestClassOrInterfaceDeclarationParent(blockStmt);
+    public CtClass getClosestClassParent() {
+        return RefactoringRule.getClosestClassParent(block);
     }
 
     /**
-     * The closest MethodDeclaration by bubbling up
-     * @return The closest MethodDeclaration by bubbling up
+     * The closest Method by bubbling up
+     *
+     * @return The closest Method by bubbling up
      */
-    public MethodDeclaration getClosestMethodDeclarationParent() {
-        return RefactoringRule.getClosestMethodDeclarationParent(blockStmt);
+    public CtMethod getClosestMethodParent() {
+        return RefactoringRule.getClosestMethodParent(block);
     }
 }

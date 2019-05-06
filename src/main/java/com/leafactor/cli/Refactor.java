@@ -6,10 +6,7 @@ import com.leafactor.cli.engine.RefactoringRule;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
-import com.leafactor.cli.rules.ViewHolderRefactoringRule;
-import com.leafactor.cli.rules.WakeLockRefactoringRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,16 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@CommandLine.Command(name = "Refactor",  mixinStandardHelpOptions = true, version = "1.0")
+@CommandLine.Command(name = "Refactor", mixinStandardHelpOptions = true, version = "1.0")
 public class Refactor implements Runnable {
-    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Helpful for troubleshooting. " +
+    @Option(names = {"-v", "--verbose"}, description = "Verbose mode. Helpful for troubleshooting. " +
             "Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
-    @Option(names = { "-yml", "--yml" }, description = "Exports files as yml.")
-    private boolean[] yml = new boolean[0];
-
-    @Option(arity = "1..*", names = { "-r", "--rules" }, description = "Specify the rules you want to apply in the refactoring process.\n" +
+    @Option(arity = "1..*", names = {"-r", "--rules"}, description = "Specify the rules you want to apply in the refactoring process.\n" +
             " - RecycleRefactoring\n" +
             " - ViewHolderRefactoring\n" +
             " - DrawAllocationRefactoring\n" +
@@ -47,24 +41,23 @@ public class Refactor implements Runnable {
 
     public void run() {
         boolean verbose = this.verbose.length > 0;
-        boolean yml = this.yml.length > 0;
 
         List<RefactoringRule> refactoringRules = new ArrayList<>();
-        if(rules.length == 0) {
+        if (rules.length == 0) {
             refactoringRules.addAll(rulesMap.values());
         } else {
-            for(String rule : rules) {
+            for (String rule : rules) {
                 refactoringRules.add(rulesMap.get(rule));
             }
         }
         CompilationUnitGroup group = new CompilationUnitGroup();
-        for(File file : inputFiles) {
-            if(!file.exists()) {
+        for (File file : inputFiles) {
+            if (!file.exists()) {
                 System.out.println("File does not exist: " + file.getAbsolutePath());
                 continue;
             }
 
-            if((file.isDirectory() || file.getAbsolutePath().endsWith(".java"))) {
+            if ((file.isDirectory() || file.getAbsolutePath().endsWith(".java"))) {
                 try {
                     group.add(file);
                 } catch (IOException e) {
@@ -77,9 +70,8 @@ public class Refactor implements Runnable {
         }
         try {
             group.run(refactoringRules);
-            if(yml) group.printYaml();
         } catch (IOException e) {
-            if(verbose) {
+            if (verbose) {
                 e.printStackTrace();
             } else {
                 System.out.println("Something went wrong.");
@@ -90,9 +82,9 @@ public class Refactor implements Runnable {
     public static void main(String[] args) {
         IterationLogger logger = new IterationLogger();
         rulesMap.put("RecycleRefactoring", new RecycleRefactoringRule(logger));
-        rulesMap.put("ViewHolderRefactoring", new ViewHolderRefactoringRule(logger));
-        rulesMap.put("DrawAllocationRefactoring", new DrawAllocationRefactoringRule(logger));
-        rulesMap.put("WakeLockRefactoring", new WakeLockRefactoringRule(logger));
+//        rulesMap.put("ViewHolderRefactoring", new ViewHolderRefactoringRule(logger));
+//        rulesMap.put("DrawAllocationRefactoring", new DrawAllocationRefactoringRule(logger));
+//        rulesMap.put("WakeLockRefactoring", new WakeLockRefactoringRule(logger));
         CommandLine.run(new Refactor(logger), args);
     }
 }
