@@ -16,7 +16,7 @@ import android.view.View;
 import android.content.Context;
 import android.os.Parcel;
 
-public class RecycleSample {
+public class Input {
     public void cursorError1(SQLiteDatabase db, long route_id) {
         Cursor cursor = db.query("TABLE_TRIPS",
                 new String[]{"KEY_TRIP_ID"},

@@ -1,23 +1,30 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldUseViewHolder;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+
+import R.layout.your_layout;
+
+
+
+
+public abstract class Input extends BaseAdapter {
     public static class Adapter2 extends ViewHolderSample {
         LayoutInflater mInflater;
 
         static class ViewHolderItem {
-            TextView text;
+            public TextView text = null;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView = convertView != null ? convertView : mInflater.inflate(R.layout.your_layout, null);
-
             ViewHolderItem viewHolderItem = (ViewHolderItem) convertView.getTag();
-            if(viewHolderItem == null) {
+            if (viewHolderItem == null) {
                 viewHolderItem = new ViewHolderItem();
                 convertView.setTag(viewHolderItem);
+                viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
             }
-            viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
+
+            TextView text = viewHolderItem.text;
             text.setText("Position " + position);
 
             return convertView;
@@ -27,11 +34,25 @@ public abstract class ViewHolderSample extends BaseAdapter {
     public static class Adapter3 extends ViewHolderSample {
         LayoutInflater mInflater;
 
+        static class ViewHolderItem {
+            public TextView text1 = null;
+
+            public TextView text2 = null;
+
+            public TextView text3 = null;
+
+            public TextView text4 = null;
+
+            public TextView text5 = null;
+
+            public TextView text6 = null;
+        }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView = convertView != null ? convertView : mInflater.inflate(R.layout.your_layout, null);
             ViewHolderItem viewHolderItem = (ViewHolderItem) convertView.getTag();
-            if(viewHolderItem == null) {
+            if (viewHolderItem == null) {
                 viewHolderItem = new ViewHolderItem();
                 convertView.setTag(viewHolderItem);
                 viewHolderItem.text1 = (TextView) convertView.findViewById(R.id.text1);

@@ -1,6 +1,9 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+import R.layout.your_layout;
+import R.id.text;
+
+public abstract class Input extends BaseAdapter {
     @Override
     public int getCount() {
         return 0;

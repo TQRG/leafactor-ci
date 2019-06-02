@@ -1,6 +1,9 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldRefactorConvertView;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+import R.layout.your_layout;
+import android.R.layout.simple_list_item_1;
+
+public abstract class Input extends BaseAdapter {
 
     public static class Adapter1 extends ViewHolderSample {
         LayoutInflater inflater;

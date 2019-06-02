@@ -18,6 +18,7 @@ public class TransformationPhaseContext {
     public CaseOfInterest caseOfInterest;
     public List<CaseOfInterest> caseOfInterestList = new ArrayList<>();
     private List<CaseOfInterest> transformedCaseOfInterestList = new ArrayList<>();
+    public Object extra;
 
     /**
      * Accepts the case for the refactoring phase

@@ -3,6 +3,7 @@ package com.leafactor.cli;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
 
+import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 import spoon.Launcher;
 import spoon.compiler.Environment;
 import spoon.reflect.CtModel;
@@ -25,8 +26,9 @@ public class Main {
         e.setAutoImports(true);
         launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
         );
-        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\RecycleSample.java");
-        launcher.addProcessor(new RecycleRefactoringRule(logger));
+        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\ViewHolderSample.java");
+//        launcher.addProcessor(new RecycleRefactoringRule(logger));
+        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
         Path tempDir = Files.createTempDirectory("temporary-output");
         System.out.println("TempDir: " + tempDir);
         launcher.setSourceOutputDirectory(tempDir.toFile());
@@ -34,7 +36,7 @@ public class Main {
         CtModel model = launcher.getModel();
         String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
         packageName = packageName.replaceAll("\\.", "\\\\");
-        File file = new File(tempDir + "\\" + packageName + "\\" + "RecycleSample.java");
+        File file = new File(tempDir + "\\" + packageName + "\\" + "ViewHolderSample.java");
         System.out.println(file);
         System.out.println(file.exists());
         System.out.println("-----------------------------------------------------");

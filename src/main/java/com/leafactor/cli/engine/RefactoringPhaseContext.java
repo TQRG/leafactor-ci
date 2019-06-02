@@ -14,7 +14,8 @@ public class RefactoringPhaseContext {
     public int offset = 0;
     public CaseOfInterest caseOfInterest;
     public CtBlock block;
-    public List<CaseOfInterest> caseOfInterests = new ArrayList<>();
+    public List<CaseOfInterest> casesOfInterest = new ArrayList<>();
+    public Object extra;
 
     /**
      * The closest Block by bubbling up

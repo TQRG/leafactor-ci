@@ -1,6 +1,13 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldNotRefactorConvertView;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+
+import R.layout.your_layout;
+import android.R.layout.simple_list_item_1;
+
+
+
+
+public abstract class Input extends BaseAdapter {
     public static class Adapter1 extends ViewHolderSample {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {

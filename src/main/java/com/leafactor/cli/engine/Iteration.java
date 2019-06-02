@@ -40,9 +40,9 @@ public interface Iteration {
     /**
      * Lifecycle method that happens when the detection phase ends and the transformation phase starts.
      *
-     * @param caseOfInterests A list of cases of interest detected overall
+     * @param context The transformation phase context
      */
-    void onWillTransform(List<CaseOfInterest> caseOfInterests);
+    void onWillTransform(TransformationPhaseContext context);
 
     /**
      * Lifecycle method that happens in an individual iteration of the cases of interest found on the detection phase
@@ -64,9 +64,9 @@ public interface Iteration {
     /**
      * Lifecycle method that happens when the detection phase ends and the refactoring phase starts.
      *
-     * @param caseOfInterests A list of cases of interest detected overall
+     * @param context The refactoring phase context
      */
-    void onWillRefactor(List<CaseOfInterest> caseOfInterests);
+    void onWillRefactor(RefactoringPhaseContext context);
 
     /**
      * Lifecycle method that happens in an individual iteration of the cases of interest found on the detection phase
@@ -117,13 +117,13 @@ public interface Iteration {
             boolean isDeep,
             int depth
     ) {
-        SimpleIterationPhaseLogEntry setupLogEntry = new SimpleIterationPhaseLogEntry(rule, "Setting up iteration", "TODO - ADD meaningful information");
+        SimpleIterationPhaseLogEntry setupLogEntry = new SimpleIterationPhaseLogEntry(rule, "Setting up iteration", "Logs the setup phase of an iteration");
 
-        // SETUP
+        // SETUP PHASE
         setupLogEntry.start();
-        SimpleIterationPhaseLogEntry detectionPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Detecting Patterns", "TODO - ADD meaningful information");
-        SimpleIterationPhaseLogEntry transformationPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Transforming Cases of Interest", "TODO - ADD meaningful information");
-        SimpleIterationPhaseLogEntry refactoringPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Refactoring Cases of Interest", "TODO - ADD meaningful information");
+        SimpleIterationPhaseLogEntry detectionPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Detecting Patterns", "Logs the detection phase of an iteration");
+        SimpleIterationPhaseLogEntry transformationPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Transforming Cases of Interest", "Logs the transformation phase of an iteration");
+        SimpleIterationPhaseLogEntry refactoringPhaseLogEntry = new SimpleIterationPhaseLogEntry(rule, "Refactoring Cases of Interest", "Logs the refactoring phase of an iteration");
         DetectionPhaseContext detectionPhaseContext = new DetectionPhaseContext();
         detectionPhaseContext.block = block;
         rule.onSetup(detectionPhaseContext);
@@ -138,7 +138,7 @@ public interface Iteration {
             rule.onWillIterate(detectionPhaseContext);
             if (isDeep && detectionPhaseContext.statement instanceof CtBlock) {
                 CtBlock statementBlock = (CtBlock) detectionPhaseContext.statement;
-//                Iteration.iterateBlock(rule, logger, statementBlock, iteration, detector, true, depth + 1);
+//                Iteration.iterateBlock(rule, logger, statementBlock, true, depth + 1);
 //              Todo: do something with the innerContext
             }
             rule.detectCase(detectionPhaseContext);
@@ -150,10 +150,10 @@ public interface Iteration {
         // TRANSFORMATION PHASE
         transformationPhaseLogEntry.start();
         List<CaseOfInterest> copyCasesDetected = new ArrayList<>(detectionPhaseContext.caseOfInterestList);
-        rule.onWillRefactor(copyCasesDetected);
         TransformationPhaseContext transformationPhaseContext = new TransformationPhaseContext();
         transformationPhaseContext.block = block;
         transformationPhaseContext.caseOfInterestList = copyCasesDetected;
+        rule.onWillTransform(transformationPhaseContext);
         for (CaseOfInterest caseOfInterest : copyCasesDetected) {
             transformationPhaseContext.caseOfInterest = caseOfInterest;
             rule.onWillTransformCase(transformationPhaseContext);
@@ -166,11 +166,11 @@ public interface Iteration {
         // REFACTORING PHASE
         refactoringPhaseLogEntry.start();
         List<CaseOfInterest> copyCasesFiltered = transformationPhaseContext.getResult();
-        rule.onWillRefactor(copyCasesFiltered);
         RefactoringPhaseContext refactoringPhaseContext = new RefactoringPhaseContext();
         refactoringPhaseContext.offset = 0;
         refactoringPhaseContext.block = block;
-        refactoringPhaseContext.caseOfInterests = copyCasesFiltered;
+        refactoringPhaseContext.casesOfInterest = copyCasesFiltered;
+        rule.onWillRefactor(refactoringPhaseContext);
         for (CaseOfInterest caseOfInterest : copyCasesFiltered) {
             refactoringPhaseContext.caseOfInterest = caseOfInterest;
             rule.onWillRefactorCase(refactoringPhaseContext);

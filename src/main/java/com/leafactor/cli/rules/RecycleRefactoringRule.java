@@ -127,7 +127,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private boolean isVariableUnderControl(String variableName, RefactoringPhaseContext context) {
-        List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.caseOfInterests);
+        List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.casesOfInterest);
         // NOTE: Only check up to this point in the phase
         // TODO - Check if used inside lambda
         // TODO - Check if was returned
@@ -136,7 +136,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private boolean wasVariableRecycled(String variableName, RefactoringPhaseContext context) {
-        List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.caseOfInterests);
+        List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.casesOfInterest);
         int index = filtered.indexOf(context.caseOfInterest);
         if(context.caseOfInterest instanceof VariableReassigned) {
             // We do not want to consider this case of interest
@@ -162,6 +162,27 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
         return false;
     }
 
+    private void recycleVariableDeclared(RefactoringPhaseContext context) {
+        if(!(context.caseOfInterest instanceof VariableDeclared)) {
+            return;
+        }
+        VariableDeclared variableDeclared = (VariableDeclared) context.caseOfInterest;
+        String variableName = variableDeclared.variable.getSimpleName();
+        String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
+        if(typeName == null) {
+            return;
+        }
+        List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest); // TODO - EXCLUDE RETURN STATEMENTS
+        boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
+        if(!isLast) {
+            return;
+        }
+        Factory factory = context.caseOfInterest.getStatement().getFactory();
+        context.caseOfInterest.getStatement().insertAfter(factory
+                .createCodeSnippetStatement(variableName + "." + typeName + "()"));
+
+    }
+
     private void recycleVariableReassigned(RefactoringPhaseContext context) {
         if(!(context.caseOfInterest instanceof VariableReassigned)) {
             return;
@@ -170,11 +191,11 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
         CtExpression assigned = ((VariableReassigned) context.caseOfInterest).assignment.getAssigned();
         if(assigned instanceof CtVariableWrite) {
             String variableName = ((CtVariableWrite) assigned).getVariable().getSimpleName();
-            String typeName = opportunities.get(getTypeByVariableName(variableName, context.caseOfInterests));
+            String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
             if(typeName == null) {
                 return;
             }
-            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.caseOfInterests);
+            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest);
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
             if(!isLast) {
                 return;
@@ -203,10 +224,11 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
         List<CtVariableAccess> variableAccesses = ((VariableUsed) context.caseOfInterest).variableAccesses;
         variableAccesses.forEach(ctVariableAccess -> {
             String variableName = ctVariableAccess.getVariable().getSimpleName();
-            if(!opportunities.containsKey(getTypeByVariableName(variableName, context.caseOfInterests))) {
+            String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
+            if(typeName == null) {
                 return;
             }
-            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.caseOfInterests);
+            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest); // TODO - EXCLUDE RETURN STATEMENTS
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
             if(!isLast) {
                 return;
@@ -221,14 +243,18 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
                 return;
             }
             Factory factory = ctVariableAccess.getFactory();
-            context.caseOfInterest.getStatement().insertAfter(factory
-                    .createCodeSnippetStatement(variableName + "." + opportunities.get(variableName) + "()"));
-
+            CtIf ctIf = factory.createIf();
+            ctIf.setThenStatement(factory
+                    .createCodeSnippetStatement(String.format("%s.%s()", variableName, typeName)));
+            ctIf.setCondition(factory
+                    .createCodeSnippetExpression(String.format("%s != null", variableName)));
+            context.caseOfInterest.getStatement().insertAfter(ctIf);
         });
     }
 
     @Override
     public void processCase(RefactoringPhaseContext context) {
+        recycleVariableDeclared(context);
         recycleVariableReassigned(context);
         recycleVariableUsed(context);
     }
@@ -262,7 +288,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     @Override
-    public void onWillTransform(List<CaseOfInterest> caseOfInterests) {
+    public void onWillTransform(TransformationPhaseContext context) {
 
     }
 
@@ -277,7 +303,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     @Override
-    public void onWillRefactor(List<CaseOfInterest> caseOfInterests) {
+    public void onWillRefactor(RefactoringPhaseContext context) {
 
     }
 

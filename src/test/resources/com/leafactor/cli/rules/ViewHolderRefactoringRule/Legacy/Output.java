@@ -1,6 +1,6 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+public abstract class Input extends BaseAdapter {
     @Override
     public int getCount() {
         return 0;
@@ -77,16 +77,27 @@ public abstract class ViewHolderSample extends BaseAdapter {
     public static class Adapter5 extends ViewHolderSample {
         LayoutInflater mInflater;
 
+        static class ViewHolderItem {
+            public TextView text = null;
+        }
+
         public View getView(int position, View convertView, ViewGroup parent) {
             // Already using View Holder pattern
             convertView = convertView == null ? mInflater.inflate(R.layout.your_layout, null) : convertView;
+            ViewHolderItem viewHolderItem = (ViewHolderItem) convertView.getTag();
+            if (viewHolderItem == null) {
+                viewHolderItem = new ViewHolderItem();
+                convertView.setTag(viewHolderItem);
+                viewHolderItem.text = (TextView) convertView.findViewById(test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy.Input.R);
+            }
 
-            TextView text = (TextView) convertView.findViewById(R.id.text);
+            TextView text = viewHolderItem.text;
             text.setText("Position " + position);
 
             return convertView;
         }
     }
+
 
     public static class Adapter7 extends ViewHolderSample {
         LayoutInflater inflater;

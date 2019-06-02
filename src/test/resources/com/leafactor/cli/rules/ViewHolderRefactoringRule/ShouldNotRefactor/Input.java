@@ -1,6 +1,10 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldNotRefactor;
 
-public abstract class ViewHolderSample extends BaseAdapter {
+
+import R.id.text;
+import R.layout.your_layout;
+
+public abstract class Input extends BaseAdapter {
     public static class Adapter1 extends ViewHolderSample {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {

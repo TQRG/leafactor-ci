@@ -1,6 +1,6 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldUseViewHolder;
 
-public abstract class Input extends BaseAdapter {
+public abstract class ViewHolderSample extends BaseAdapter {
     public static class Adapter2 extends ViewHolderSample {
         LayoutInflater mInflater;
 

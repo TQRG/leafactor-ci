@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
-public class WakeLockSample {
+public class Input {
     public class SimpleWakeLockActivity extends Activity {
         private PowerManager.WakeLock wl;
 

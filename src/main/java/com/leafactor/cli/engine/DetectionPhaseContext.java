@@ -16,6 +16,7 @@ public class DetectionPhaseContext {
     public int statementIndex;
     public CtStatement statement;
     public List<CaseOfInterest> caseOfInterestList = new ArrayList<>();
+    public Object extra;
 
     /**
      * The closest Block by bubbling up
