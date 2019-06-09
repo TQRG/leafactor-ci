@@ -4,6 +4,7 @@ import com.leafactor.cli.engine.*;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.Cases.VariableDeclared;
 import com.leafactor.cli.rules.ViewHolderCases.*;
+import org.eclipse.jdt.core.dom.IfStatement;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.*;
@@ -102,16 +103,35 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
         if(context.caseOfInterest instanceof VariableAssignedInflator) {
             // In this case we want to check where the inflated view is stored
             VariableAssignedInflator variableAssignedInflator = (VariableAssignedInflator) context.caseOfInterest;
-            // TODO - REFACTOR THIS, THE REST OF THE CODE EXPECTS THIS TO BE REFACTORED
+            if(variableAssignedInflator.variable.getSimpleName().equals(extra.argumentName)) {
+                return;
+            }
+            CtConditional conditional = extra.factory.createConditional();
+            conditional.setCondition(extra.factory.createCodeSnippetExpression(extra.argumentName + " == null"));
+            conditional.setElseExpression(extra.factory.createCodeSnippetExpression(extra.argumentName));
+            if(variableAssignedInflator.getStatement() instanceof CtVariable) {
+                CtVariable variable = ((CtVariable)variableAssignedInflator.getStatement());
+                conditional.setThenExpression(variable.getDefaultExpression());
+                variable.setDefaultExpression(conditional);
+            } else if (variableAssignedInflator.getStatement() instanceof CtAssignment) {
+                CtAssignment assignment = (CtAssignment) variableAssignedInflator.getStatement();
+                conditional.setThenExpression(assignment.getAssignment());
+                assignment.setAssignment(conditional);
+            }
             extra.viewVariableName = variableAssignedInflator.variable.getSimpleName();
             extra.convertViewInflated = true;
         } else if(context.caseOfInterest instanceof ConvertViewReassignInflator) {
             ConvertViewReassignInflator convertViewReassignInflator = (ConvertViewReassignInflator) context.caseOfInterest;
-            // TODO - REFACTOR THIS, THE REST OF THE CODE EXPECTS THIS TO BE REFACTORED
+            CtExpression assignment = convertViewReassignInflator.assignment.getAssignment();
+            CtConditional conditional = extra.factory.createConditional();
+            conditional.setCondition(extra.factory.createCodeSnippetExpression(extra.argumentName + " == null"));
+            conditional.setThenExpression(assignment);
+            conditional.setElseExpression(extra.factory.createCodeSnippetExpression(extra.argumentName));
+            convertViewReassignInflator.assignment.setAssignment(conditional);
             extra.viewVariableName = extra.argumentName;
             extra.convertViewInflated = true;
         } else if(context.caseOfInterest instanceof ConvertViewReuseWithTernary) {
-            ConvertViewReuseWithTernary convertViewReuseWithTernary = (ConvertViewReuseWithTernary) context.caseOfInterest;
+            // In this case everything is well no need to worry about the convertView anymore.
             extra.viewVariableName = extra.argumentName;
             extra.convertViewInflated = true;
         } else if(context.caseOfInterest instanceof VariableAssignedGetTag) {
@@ -175,14 +195,14 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
 
             // New variables for easier access
             Set<CtTypeReference<?>> ctTypeReferences = variableAssignedFindViewById.resource.getReferencedTypes();
-            String resource = ctTypeReferences.toArray()[0].toString();
+            String resource = ctTypeReferences.toArray()[ctTypeReferences.size() - 1].toString();
 
             if(!extra.hasViewHolderInstance) {
                 // Then we need to create it.
                 // Create a statement to get the viewHolder instance if it exists.
                 CtStatement newStatement1 = extra.factory.createCodeSnippetStatement(String.format(
                         "ViewHolderItem %s = (ViewHolderItem) %s.getTag()",
-                        extra.viewHolderInstanceName, extra.argumentName));
+                        extra.viewHolderInstanceName, extra.viewVariableName));
                 if(extra.hasIfStmt) {
                     extra.ifStmt.insertBefore(newStatement1);
                 } else {
@@ -203,7 +223,7 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
                         String.format("%s.%s = (TextView) %s.findViewById(%s)",
                                 extra.viewHolderInstanceName,
                                 variableAssignedFindViewById.variable.getSimpleName(),
-                                extra.argumentName, resource)));
+                                extra.viewVariableName, resource)));
             }
 
             // Replace the assignment of the variable with the ViewHolder field
@@ -266,7 +286,6 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
             extra.viewVariableName = argumentName;
             extra.factory = factory;
         }
-
     }
 
     @Override

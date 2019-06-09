@@ -1,8 +1,5 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy;
 
-import R.layout.your_layout;
-import R.id.text;
-
 public abstract class Input extends BaseAdapter {
     @Override
     public int getCount() {
@@ -31,7 +28,7 @@ public abstract class Input extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            convertView = mInflater.inflate(R.layout.your_layout, null);
+            convertView = (convertView == null) ? mInflater.inflate(R.layout.your_layout, null) : convertView;
 
             TextView text = (TextView) convertView.findViewById(R.id.text);
             text.setText("Position " + position);
@@ -79,7 +76,7 @@ public abstract class Input extends BaseAdapter {
                 case 0:
                     if (rootView != null)
                         return rootView;
-                    rootView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                    rootView = inflater.inflate(R.layout.your_layout, parent, false);
                     break;
             }
             return rootView;

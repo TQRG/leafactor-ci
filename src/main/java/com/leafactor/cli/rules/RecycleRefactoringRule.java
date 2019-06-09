@@ -5,6 +5,8 @@ import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.Cases.VariableDeclared;
 import com.leafactor.cli.rules.Cases.VariableReassigned;
 import com.leafactor.cli.rules.Cases.VariableUsed;
+import com.leafactor.cli.rules.RecycleCases.VariableLost;
+import com.leafactor.cli.rules.RecycleCases.VariableRecycled;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.CtClass;
@@ -64,6 +66,17 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
         if (variableUsed != null) {
             context.caseOfInterestList.add(variableUsed);
         }
+        // Detect lost variables
+        VariableLost variableLost = VariableLost.detect(context);
+        if (variableLost != null) {
+            context.caseOfInterestList.add(variableLost);
+        }
+
+        // Detect recycled variables
+        VariableRecycled variableRecycled = VariableRecycled.detect(context, opportunities);
+        if (variableRecycled != null) {
+            context.caseOfInterestList.add(variableRecycled);
+        }
     }
 
     @Override
@@ -110,6 +123,14 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
                 return ((VariableUsed) caseOfInterest).variableAccesses.stream()
                         .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
                                 .equals(variableName));
+            } else if(caseOfInterest instanceof VariableLost) {
+                return ((VariableLost) caseOfInterest).variableAccesses.stream()
+                        .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
+                                .equals(variableName));
+            } else if(caseOfInterest instanceof VariableRecycled) {
+                return ((VariableRecycled) caseOfInterest).variableAccesses.stream()
+                        .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
+                                .equals(variableName));
             }
             return false;
         }).collect(Collectors.toList());
@@ -129,10 +150,12 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     private boolean isVariableUnderControl(String variableName, RefactoringPhaseContext context) {
         List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.casesOfInterest);
         // NOTE: Only check up to this point in the phase
-        // TODO - Check if used inside lambda
-        // TODO - Check if was returned
-        // TODO - Check if was sent as argument
-        return false;
+        filtered = filtered.stream()
+                .filter(VariableLost.class::isInstance)
+                .map(VariableLost.class::cast)
+                .filter(variableLost -> variableLost.getStatementIndex() < context.caseOfInterest.getStatementIndex())
+                .collect(Collectors.toList());
+        return filtered.size() == 0;
     }
 
     private boolean wasVariableRecycled(String variableName, RefactoringPhaseContext context) {
@@ -148,15 +171,8 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             // NOTE: Only check up to this point in the phase and after the last declaration or redeclaration of this variable
             if(current instanceof VariableReassigned || current instanceof VariableDeclared) {
                 break;
-            } else if(current instanceof VariableUsed) {
-                VariableUsed variableUsed = (VariableUsed) current;
-                if(variableUsed.getStatement() instanceof CtInvocation) {
-                    CtInvocation invocation = ((CtInvocation)current.getStatement());
-                    String recyclingMethod = opportunities.get(getTypeByVariableName(variableName, filtered));
-                    if(invocation.getExecutable().getSimpleName().equals(recyclingMethod)) {
-                        return true;
-                    }
-                }
+            } else if(current instanceof VariableRecycled) {
+                return true;
             }
         }
         return false;
@@ -178,9 +194,14 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             return;
         }
         Factory factory = context.caseOfInterest.getStatement().getFactory();
-        context.caseOfInterest.getStatement().insertAfter(factory
-                .createCodeSnippetStatement(variableName + "." + typeName + "()"));
-
+        CtIf ctIf = factory.createIf();
+        CtBlock ctBlock = factory.createBlock();
+        ctBlock.addStatement(factory
+                .createCodeSnippetStatement(String.format("%s.%s()", variableName, typeName)));
+        ctIf.setThenStatement(ctBlock);
+        ctIf.setCondition(factory
+                .createCodeSnippetExpression(String.format("%s != null", variableName)));
+        context.caseOfInterest.getStatement().insertAfter(ctIf);
     }
 
     private void recycleVariableReassigned(RefactoringPhaseContext context) {
@@ -195,25 +216,44 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             if(typeName == null) {
                 return;
             }
+
+            boolean wasVariableRecycled = wasVariableRecycled(variableName, context);
+            if(wasVariableRecycled) {
+                return;
+            }
+
+            boolean isInControl = isVariableUnderControl(variableName, context);
+            if(!isInControl) {
+                return;
+            }
+
+            Factory factory = assigned.getFactory();
+            CtIf ctIf2 = factory.createIf();
+            CtBlock ctBlock2 = factory.createBlock();
+            ctBlock2.addStatement(factory
+                    .createCodeSnippetStatement(String.format("%s.%s()", variableName, typeName)));
+            ctIf2.setThenStatement(ctBlock2);
+            ctIf2.setCondition(factory
+                    .createCodeSnippetExpression(String.format("%s != null", variableName)));
+            context.caseOfInterest.getStatement().insertBefore(ctIf2);
+
+
             List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest);
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
             if(!isLast) {
                 return;
             }
-            Factory factory = assigned.getFactory();
-            context.caseOfInterest.getStatement().insertAfter(factory
-                    .createCodeSnippetStatement(variableName + "." + typeName + "()"));
-            boolean wasVariableRecycled = wasVariableRecycled(variableName, context);
-            if(wasVariableRecycled) {
-                return;
-            }
-            // Todo - Check if the variable is under control
-            boolean isInControl = true;
-            if(!isInControl) {
-                return;
-            }
-            context.caseOfInterest.getStatement().insertBefore(factory
-                    .createCodeSnippetStatement(variableName + "." + typeName + "()"));
+
+            CtIf ctIf = factory.createIf();
+            CtBlock ctBlock = factory.createBlock();
+            ctBlock.addStatement(factory
+                    .createCodeSnippetStatement(String.format("%s.%s()", variableName, typeName)));
+            ctIf.setThenStatement(ctBlock);
+            ctIf.setCondition(factory
+                    .createCodeSnippetExpression(String.format("%s != null", variableName)));
+            context.caseOfInterest.getStatement().insertAfter(ctIf);
+
+
         }
     }
 
@@ -222,13 +262,19 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             return;
         }
         List<CtVariableAccess> variableAccesses = ((VariableUsed) context.caseOfInterest).variableAccesses;
+        Set<String> alreadyRecycles = new HashSet<>();
         variableAccesses.forEach(ctVariableAccess -> {
             String variableName = ctVariableAccess.getVariable().getSimpleName();
+
+            if(alreadyRecycles.contains(variableName)) {
+                return;
+            }
+
             String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
             if(typeName == null) {
                 return;
             }
-            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest); // TODO - EXCLUDE RETURN STATEMENTS
+            List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest);
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
             if(!isLast) {
                 return;
@@ -237,18 +283,22 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             if(wasVariableRecycled) {
                 return;
             }
-            // Todo - Check if the variable is under control
-            boolean isInControl = true;
+
+            boolean isInControl = isVariableUnderControl(variableName, context);
             if(!isInControl) {
                 return;
             }
+
             Factory factory = ctVariableAccess.getFactory();
             CtIf ctIf = factory.createIf();
-            ctIf.setThenStatement(factory
+            CtBlock ctBlock = factory.createBlock();
+            ctBlock.addStatement(factory
                     .createCodeSnippetStatement(String.format("%s.%s()", variableName, typeName)));
+            ctIf.setThenStatement(ctBlock);
             ctIf.setCondition(factory
                     .createCodeSnippetExpression(String.format("%s != null", variableName)));
             context.caseOfInterest.getStatement().insertAfter(ctIf);
+            alreadyRecycles.add(variableName);
         });
     }
 
@@ -260,7 +310,10 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private void refactor(CtMethod method) {
-        Iteration.iterateMethod(this, logger, method,false);
+        List<CtBlock> blocks = RefactoringRule.getCtElementsOfInterest(method, CtBlock.class::isInstance, CtBlock.class);
+        for (CtBlock block : blocks) {
+            Iteration.iterateBlock(this, logger, block,false, 0);
+        }
     }
 
     public void process(CtClass element) {

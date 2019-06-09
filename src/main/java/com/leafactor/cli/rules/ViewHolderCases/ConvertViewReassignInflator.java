@@ -11,10 +11,12 @@ import spoon.reflect.reference.CtVariableReference;
 
 public class ConvertViewReassignInflator extends CaseOfInterest {
     final public CtVariableReference variable;
+    final public CtAssignment assignment;
 
-    private ConvertViewReassignInflator(CtVariableReference variable, DetectionPhaseContext context) {
+    private ConvertViewReassignInflator(CtVariableReference variable, CtAssignment assignment, DetectionPhaseContext context) {
         super(context);
         this.variable = variable;
+        this.assignment = assignment;
     }
 
     public static ConvertViewReassignInflator detect(DetectionPhaseContext context) {
@@ -38,7 +40,10 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
             CtParameter secondParameter = (CtParameter) context.getClosestMethodParent().getParameters().get(1);
             boolean assignedToConvertView = variableWrite.getVariable().getSimpleName().equals(secondParameter.getSimpleName());
             if (assignedToConvertView) {
-                context.caseOfInterestList.add(new ConvertViewReassignInflator(variableWrite.getVariable(), context));
+                return new ConvertViewReassignInflator(
+                        variableWrite.getVariable(),
+                        assignment,
+                        context);
             }
         }
         return null;

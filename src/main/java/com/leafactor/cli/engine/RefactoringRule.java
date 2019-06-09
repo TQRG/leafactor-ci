@@ -61,6 +61,22 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
     }
 
     /**
+     * The closest T by bubbling up
+     * @param element The element from which to start
+     * @return The closest T by bubbling up
+     */
+    static <T> T getClosestTypeParent(CtElement element, Class<T> type, List<CtElement> stopAt) {
+        CtElement root = element.getParent();
+        while (root != null  && !(type.isInstance(root)) && !stopAt.contains(root)) {
+            root = root.getParent();
+        }
+        if(root == null || stopAt.contains(root)) {
+            return null;
+        }
+        return type.cast(root);
+    }
+
+    /**
      * The closest CtBlock by bubbling up
      * @param element The element from which to start
      * @return The closest CtBlock by bubbling up

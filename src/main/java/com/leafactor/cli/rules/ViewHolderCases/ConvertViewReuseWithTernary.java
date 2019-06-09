@@ -82,7 +82,7 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
             CtParameter secondParameter = (CtParameter) context.getClosestMethodParent().getParameters().get(1);
             boolean assignedToConvertView = variableWrite.getVariable().getSimpleName().equals(secondParameter.getSimpleName());
             if (assignedToConvertView) {
-                context.caseOfInterestList.add(new ConvertViewReuseWithTernary(variableWrite.getVariable(), conditionVariableRead, variableRead, context));
+                return new ConvertViewReuseWithTernary(variableWrite.getVariable(), conditionVariableRead, variableRead, context);
             }
         }
         return null;

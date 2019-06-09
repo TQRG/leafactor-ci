@@ -26,9 +26,9 @@ public class Main {
         e.setAutoImports(true);
         launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
         );
-        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\ViewHolderSample.java");
-//        launcher.addProcessor(new RecycleRefactoringRule(logger));
-        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
+        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\RecycleSample.java");
+        launcher.addProcessor(new RecycleRefactoringRule(logger));
+//        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
         Path tempDir = Files.createTempDirectory("temporary-output");
         System.out.println("TempDir: " + tempDir);
         launcher.setSourceOutputDirectory(tempDir.toFile());
@@ -36,7 +36,7 @@ public class Main {
         CtModel model = launcher.getModel();
         String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
         packageName = packageName.replaceAll("\\.", "\\\\");
-        File file = new File(tempDir + "\\" + packageName + "\\" + "ViewHolderSample.java");
+        File file = new File(tempDir + "\\" + packageName + "\\" + "RecycleSample.java");
         System.out.println(file);
         System.out.println(file.exists());
         System.out.println("-----------------------------------------------------");
