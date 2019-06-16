@@ -2,12 +2,17 @@ package com.leafactor.cli.rules;
 
 import com.leafactor.cli.engine.*;
 import com.leafactor.cli.engine.logging.IterationLogger;
+import com.leafactor.cli.rules.Cases.VariableDeclared;
+import com.leafactor.cli.rules.DrawAllocationCases.ObjectAllocation;
+import com.leafactor.cli.rules.WakeLockCases.WakeLockAcquired;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
-import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtMethod;
+import spoon.reflect.declaration.*;
+import spoon.reflect.factory.Factory;
+import spoon.reflect.reference.CtTypeReference;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implements RefactoringRule<CtClass> {
@@ -17,22 +22,99 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
         this.logger = logger;
     }
 
+    private boolean methodSignatureMatches(CtMethod method) {
+        // SIGNATURE:
+        // protected void onCreate(Bundle savedInstanceState)
+        boolean nameMatch = method.getSimpleName().equals("onCreate");
+        CtTypeReference type = method.getType();
+        boolean returnTypeMatch = type != null && type.getSimpleName().equals("void");
+
+        boolean hasSameNumberOfArguments = method.getParameters().size() == 1;
+        if (hasSameNumberOfArguments) {
+            List parameterList = method.getParameters();
+
+            CtTypeReference firstArgumentType = ((CtParameter)parameterList.get(0)).getType();
+            boolean firstArgumentTypeMatches = firstArgumentType.getSimpleName().endsWith("Bundle");
+
+            return nameMatch &&
+                    returnTypeMatch &&
+                    firstArgumentTypeMatches;
+        }
+
+        return false;
+    }
+
     @Override
     public void detectCase(DetectionPhaseContext context) {
+        WakeLockAcquired wakeLockAcquired = WakeLockAcquired.detect(context);
+        if (wakeLockAcquired != null) {
+            context.caseOfInterestList.add(wakeLockAcquired);
+        }
 
+        VariableDeclared variableDeclared = VariableDeclared.detect(context);
+        if (variableDeclared != null) {
+            context.caseOfInterestList.add(variableDeclared);
+        }
     }
 
     @Override
     public void transformCase(TransformationPhaseContext context) {
-
+        CaseTransformer.createPassThroughTransformation().transformCase(context);
     }
 
     @Override
     public void processCase(RefactoringPhaseContext context) {
+        if(context.caseOfInterest instanceof WakeLockAcquired) {
+            WakeLockAcquired wakeLockAcquired = (WakeLockAcquired) context.caseOfInterest;
+            Optional<VariableDeclared> optionalVariableDeclared = context.casesOfInterest.stream()
+                    .filter(VariableDeclared.class::isInstance)
+                    .map(VariableDeclared.class::cast)
+                    .filter(variableDeclared -> variableDeclared.variable.getSimpleName()
+                            .equals(wakeLockAcquired.variable.getVariable().getSimpleName())).findFirst();
+            if(optionalVariableDeclared.isPresent()) {
 
+                CtClass ctClass = RefactoringRule.getClosestClassParent(context.block);
+                if(ctClass == null) {
+                    return;
+                }
+                // There is a viewHolder - Check if the field is inside, create it if necessary
+                List<CtField<?>> fields = ctClass.getFields();
+                Optional<CtField<?>> optionalField = fields.stream().filter(field -> field.getSimpleName()
+                        .equals(optionalVariableDeclared.get().variable.getSimpleName())).findFirst();
+                if(optionalField.isPresent() && !optionalField.get().getType().getSimpleName()
+                        .equals(optionalVariableDeclared.get().variable.getType().getSimpleName())) {
+                    // If types do not match we ignore for now.
+                    return;
+                }
+                if(!optionalField.isPresent()) {
+                    CtTypeReference typeReference = optionalVariableDeclared.get().variable.getType();
+                    CtField field = ctClass.getFactory().createCtField(optionalVariableDeclared.get().variable.getSimpleName(), typeReference,
+                            "null", ModifierKind.PRIVATE);
+                    ctClass.addField(field);
+
+                    Factory factory = optionalVariableDeclared.get().getStatement().getFactory();
+                    CtAssignment assignment = factory.createAssignment();
+                    assignment.setAssigned(factory.createCodeSnippetExpression(optionalVariableDeclared.get().variable.getSimpleName()));
+                    assignment.setAssignment(optionalVariableDeclared.get().variable.getDefaultExpression());
+                    optionalVariableDeclared.get().getStatement().insertBefore(assignment);
+                    context.block.removeStatement(optionalVariableDeclared.get().getStatement());
+                    context.block.removeStatement(wakeLockAcquired.getStatement());
+                }
+
+            }
+
+            // From here on we assume the variable is in the class as a field
+
+            // TODO - add both methods where necessary.
+
+
+        }
     }
 
     private void refactor(CtMethod method) {
+        if (!methodSignatureMatches(method)) {
+            return;
+        }
         List<CtBlock> blocks = RefactoringRule.getCtElementsOfInterest(method, CtBlock.class::isInstance, CtBlock.class);
         for (CtBlock block : blocks) {
             Iteration.iterateBlock(this, logger, block,false, 0);

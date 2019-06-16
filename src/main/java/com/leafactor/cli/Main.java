@@ -5,6 +5,7 @@ import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
 
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
+import com.leafactor.cli.rules.WakeLockRefactoringRule;
 import spoon.Launcher;
 import spoon.compiler.Environment;
 import spoon.reflect.CtModel;
@@ -27,10 +28,11 @@ public class Main {
         e.setAutoImports(true);
         launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
         );
-        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\DrawAllocationSample.java");
+        launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\WakeLockSample.java");
 //        launcher.addProcessor(new RecycleRefactoringRule(logger));
-          launcher.addProcessor(new DrawAllocationRefactoringRule(logger));
+//          launcher.addProcessor(new DrawAllocationRefactoringRule(logger));
 //        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
+        launcher.addProcessor(new WakeLockRefactoringRule(logger));
         Path tempDir = Files.createTempDirectory("temporary-output");
         System.out.println("TempDir: " + tempDir);
         launcher.setSourceOutputDirectory(tempDir.toFile());
@@ -38,7 +40,7 @@ public class Main {
         CtModel model = launcher.getModel();
         String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
         packageName = packageName.replaceAll("\\.", "\\\\");
-        File file = new File(tempDir + "\\" + packageName + "\\" + "DrawAllocationSample.java");
+        File file = new File(tempDir + "\\" + packageName + "\\" + "WakeLockSample.java");
         System.out.println(file);
         System.out.println(file.exists());
         System.out.println("-----------------------------------------------------");
