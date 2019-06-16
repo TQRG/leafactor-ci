@@ -1,23 +1,23 @@
 package test.resources.com.leafactor.cli.rules.DrawAllocationRefactoringRule.Legacy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.Button;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+
 /** Some test data for the JavaPerformanceDetector */
 @SuppressWarnings("unused")
 public class Input extends Button {
 
-    public DrawAllocationSample(Context context, AttributeSet attrs, int defStyle) {
+    public Input(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
@@ -30,9 +30,6 @@ public class Input extends Button {
         // Various allocations:
         new String("foo");
 
-        // This one should not be reported:
-        Integer i = new Integer(5);
-
         // Cached object initialized lazily: should not complain about these
         if (cachedRect == null) {
             cachedRect = new Rect(0, 0, 100, 100);
@@ -44,7 +41,7 @@ public class Input extends Button {
         boolean b = Boolean.valueOf(true); // auto-boxing
 
         Integer i2 = new Integer(i);
-        Integer i3 = (Integer) new Integer(2);
+        myOtherMap.clear();
 
         // Non-allocations
         super.animate();
@@ -53,7 +50,6 @@ public class Input extends Button {
         // This will involve allocations, but we don't track
         // inter-procedural stuff here
         someOtherMethod();
-        myOtherMap.clear();
     }
 
     void someOtherMethod() {
@@ -86,10 +82,14 @@ public class Input extends Button {
             return;
         }
 
-        List<Integer> array = new ArrayList<Integer>();
+        private List<Integer> array = new ArrayList<Integer>();
     }
 
-    String s = new String("bar");
+    private String s = new String("bar");
 
-    Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
+    private Integer i = new Integer(5);
+
+    private Integer i3 = ((Integer) (new Integer(2)));
+
+    private Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
 }

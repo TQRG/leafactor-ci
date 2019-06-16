@@ -15,9 +15,9 @@ import android.util.AttributeSet;
 import android.widget.Button;
 /** Some test data for the JavaPerformanceDetector */
 @SuppressWarnings("unused")
-public class Input extends Button {
+public class DrawAllocationSample extends Button {
 
-    public Input(Context context, AttributeSet attrs, int defStyle) {
+    public DrawAllocationSample(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
