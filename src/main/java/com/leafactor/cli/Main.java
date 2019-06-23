@@ -29,9 +29,9 @@ public class Main {
         launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
         );
         launcher.addInputResource("C:\\repositories\\leafactor-ci\\src\\main\\resources\\WakeLockSample.java");
-//        launcher.addProcessor(new RecycleRefactoringRule(logger));
-//          launcher.addProcessor(new DrawAllocationRefactoringRule(logger));
-//        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
+        launcher.addProcessor(new RecycleRefactoringRule(logger));
+        launcher.addProcessor(new DrawAllocationRefactoringRule(logger));
+        launcher.addProcessor(new ViewHolderRefactoringRule(logger));
         launcher.addProcessor(new WakeLockRefactoringRule(logger));
         Path tempDir = Files.createTempDirectory("temporary-output");
         System.out.println("TempDir: " + tempDir);

@@ -1,4 +1,6 @@
 language: java
 jdk:
   - oraclejdk9
+script: mvn install -DskipTests
+script: find . -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
 script: mvn test -B

@@ -3,6 +3,9 @@ package com.leafactor.cli;
 import com.leafactor.cli.engine.CompilationUnitGroup;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.RefactoringRule;
+import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
+import com.leafactor.cli.rules.ViewHolderRefactoringRule;
+import com.leafactor.cli.rules.WakeLockRefactoringRule;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -82,9 +85,9 @@ public class Refactor implements Runnable {
     public static void main(String[] args) {
         IterationLogger logger = new IterationLogger();
         rulesMap.put("RecycleRefactoring", new RecycleRefactoringRule(logger));
-//        rulesMap.put("ViewHolderRefactoring", new ViewHolderRefactoringRule(logger));
-//        rulesMap.put("DrawAllocationRefactoring", new DrawAllocationRefactoringRule(logger));
-//        rulesMap.put("WakeLockRefactoring", new WakeLockRefactoringRule(logger));
+        rulesMap.put("ViewHolderRefactoring", new ViewHolderRefactoringRule(logger));
+        rulesMap.put("DrawAllocationRefactoring", new DrawAllocationRefactoringRule(logger));
+        rulesMap.put("WakeLockRefactoring", new WakeLockRefactoringRule(logger));
         CommandLine.run(new Refactor(logger), args);
     }
 }
