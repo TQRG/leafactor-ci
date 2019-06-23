@@ -7,7 +7,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
 public class Input {
-    public class SimpleWakeLockActivity extends Activity {
+    public class C1 extends Activity {
         private PowerManager.WakeLock wl;
 
         @Override
@@ -31,8 +31,7 @@ public class Input {
         }
     }
 
-    public class SimpleWakeLockWithoutOnPauseActivity extends Activity {
-        private PowerManager.WakeLock wl;
+    public class C2 extends Activity {
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -50,25 +49,24 @@ public class Input {
         }
     }
 
-    public class SimpleWakeLockWithoutReleaseActivity extends Activity {
-        private PowerManager.WakeLock wl;
-
+    public class C3 extends Activity {
+        private WakeLock wl;
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
             PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-            WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
+            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
             wl.acquire();
         }
 
         @Override() protected void onPause(){
             super.onPause();
+            wl.release();
         }
     }
 
-    public class SimpleWakeLockWithoutReleaseAndWithoutOnPauseActivity extends Activity {
-        private PowerManager.WakeLock wl;
+    public class C4 extends Activity {
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {

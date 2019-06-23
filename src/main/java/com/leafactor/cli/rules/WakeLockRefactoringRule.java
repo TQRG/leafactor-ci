@@ -9,8 +9,11 @@ import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.*;
 import spoon.reflect.factory.Factory;
+import spoon.reflect.factory.SubFactory;
+import spoon.reflect.reference.CtExecutableReference;
 import spoon.reflect.reference.CtTypeReference;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,9 +108,131 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
 
             // From here on we assume the variable is in the class as a field
 
-            // TODO - add both methods where necessary.
+            CtClass ctClass = RefactoringRule.getClosestClassParent(context.block);
+            if(ctClass == null) {
+                return;
+            }
 
+            Set<CtMethod<?>> methods = ctClass.getMethods();
+            boolean hasOnPause = false;
+            boolean hasOnResume = false;
+            boolean hasOnDestroy = false;
+            String variableName = wakeLockAcquired.variable.getVariable().getSimpleName();
+            for (CtMethod<?> ctMethod : methods) {
 
+                if(ctMethod.getParameters().size() != 0 || !ctMethod.getType().getSimpleName().equals("void")) {
+                    continue;
+                }
+
+                switch(ctMethod.getSimpleName()) {
+                    case "onPause":
+                        hasOnPause = true;
+                        boolean hasRelease = false;
+                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if(statement instanceof CtInvocation) {
+                                CtInvocation invocation = (CtInvocation) statement;
+                                CtExpression target = invocation.getTarget();
+                                if (target.toString().equals(variableName) &&
+                                        invocation.getExecutable().getSimpleName().equals("release")) {
+                                    hasRelease = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!hasRelease) {
+                            ctMethod.getBody().addStatement(ctMethod.getFactory()
+                                    .createCodeSnippetStatement(variableName + ".release()"));
+                        }
+
+                        break;
+                    case "onResume":
+                        hasOnResume = true;
+
+                        boolean hasAcquire = false;
+                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if(statement instanceof CtInvocation) {
+                                CtInvocation invocation = (CtInvocation) statement;
+                                CtExpression target = invocation.getTarget();
+                                System.out.println(target);
+                                if (target.toString().equals(variableName) &&
+                                        invocation.getExecutable().getSimpleName().equals("acquire")) {
+                                    hasAcquire = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!hasAcquire) {
+                            ctMethod.getBody().addStatement(ctMethod.getFactory()
+                                    .createCodeSnippetStatement(variableName + ".acquire()"));
+                        }
+
+                        break;
+
+                    case "onDestroy":
+                        hasOnDestroy = true;
+
+                        boolean hasDestroy = false;
+                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if(statement instanceof CtInvocation) {
+                                CtInvocation invocation = (CtInvocation) statement;
+                                CtExpression target = invocation.getTarget();
+                                System.out.println(target);
+                                if (target.toString().equals(variableName) &&
+                                        invocation.getExecutable().getSimpleName().equals("release")) {
+                                    hasDestroy = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!hasDestroy) {
+                            ctMethod.getBody().addStatement(ctMethod.getFactory()
+                                    .createCodeSnippetStatement(variableName + ".release()"));
+                        }
+
+                        break;
+                }
+            }
+
+            Factory factory = ctClass.getFactory();
+
+            if(!hasOnPause) {
+                CtMethod method = factory.createMethod();
+                method.setType(factory.Type().voidPrimitiveType());
+                method.setSimpleName("onPause");
+                CtAnnotation<Annotation> annotation = factory.Code()
+                        .createAnnotation(getFactory().Code().createCtTypeReference(Override.class));
+                method.addAnnotation(annotation);
+                method.setBody(factory.createBlock());
+                method.getBody().addStatement(factory.createCodeSnippetStatement("super.onPause()"));
+                method.getBody().addStatement(factory.createCodeSnippetStatement(variableName + ".release()"));
+                ctClass.addMethod(method);
+            }
+
+            if(!hasOnResume) {
+                CtMethod method = factory.createMethod();
+                method.setType(factory.Type().voidPrimitiveType());
+                method.setSimpleName("onResume");
+                CtAnnotation<Annotation> annotation = factory.Code()
+                        .createAnnotation(getFactory().Code().createCtTypeReference(Override.class));
+                method.addAnnotation(annotation);
+                method.setBody(factory.createBlock());
+                method.getBody().addStatement(factory.createCodeSnippetStatement("super.onResume()"));
+                method.getBody().addStatement(factory.createCodeSnippetStatement(variableName + ".acquire()"));
+                ctClass.addMethod(method);
+            }
+
+            if(!hasOnDestroy) {
+                CtMethod method = factory.createMethod();
+                method.setType(factory.Type().voidPrimitiveType());
+                CtAnnotation<Annotation> annotation = factory.Code()
+                        .createAnnotation(getFactory().Code().createCtTypeReference(Override.class));
+                method.addAnnotation(annotation);
+                method.setSimpleName("onDestroy");
+                method.setBody(factory.createBlock());
+                method.getBody().addStatement(factory.createCodeSnippetStatement("super.onDestroy()"));
+                method.getBody().addStatement(factory.createCodeSnippetStatement(variableName + ".release()"));
+                ctClass.addMethod(method);
+            }
         }
     }
 
