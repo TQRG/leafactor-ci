@@ -37,7 +37,7 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
-                            <finalName>refactor.jar</finalName>
+                            <finalName>refactor</finalName>
                         </configuration>
                         <phase>package</phase>
                         <goals>
@@ -55,7 +55,7 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
-                            <finalName>analyse.jar</finalName>
+                            <finalName>analyse</finalName>
                         </configuration>
                         <phase>package</phase>
                         <goals>
