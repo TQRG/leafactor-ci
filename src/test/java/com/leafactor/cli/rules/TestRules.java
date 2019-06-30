@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,11 +37,12 @@ class TestRules {
     }
 
     @TestFactory
-    Collection<DynamicTest> dynamicTestsWithCollection() throws IOException {
-        String dir = TestRules.class.getResource("./").getPath().substring(1);
-        try (Stream<Path> paths = Files.walk(Paths.get(dir))) {
+    Collection<DynamicTest> dynamicTestsWithCollection() throws IOException, URISyntaxException {
+        URI uri = TestRules.class.getResource("./").toURI();
+        File dir = new File(uri);
+        try (Stream<Path> paths = Files.walk(dir.toPath())) {
             return paths
-                    .filter((file) -> !file.equals(Paths.get(dir)))
+                    .filter((path) -> !path.equals(dir.toPath()))
                     .filter(Files::isDirectory)
                     .map((file) -> {
                         try (Stream<Path> subPaths = Files.walk(file)) {
@@ -67,6 +71,7 @@ class TestRules {
                                                 launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
                                                 );
                                                 launcher.addInputResource(beforePath);
+
                                                 Class<?> clazz = Class.forName("com.leafactor.cli.rules." + file.getFileName().toString());
                                                 Constructor<?> ctor = clazz.getConstructor(IterationLogger.class);
                                                 RefactoringRule rule = (RefactoringRule) ctor.newInstance(logger);
