@@ -1,19 +1,13 @@
 language: java
 jdk:
-  - oraclejdk9
-script: mvn install -DskipTests
+- oraclejdk9
 script: mvn test -B
-
-
-Wildcards are supported now, I run this setup:
-
 before_deploy:
-  - "mvn -DskipTests package"
-  - export REFACTOR_FILE=$(ls target/refactor-jar-with-dependencies.jar)
-
+- mvn -DskipTests package
 deploy:
   provider: releases
   api_key:
-#   The secure token was generated using Travis Encrypt in the TravisCLI
     secure: $GITHUB_RELEASE_API_KEY
-  file: "${REFACTOR_FILE}"
+  file: target/refactor-jar-with-dependencies.jar
+  on:
+    repo: TQRG/leafactor-ci
