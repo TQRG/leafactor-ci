@@ -52,8 +52,8 @@ class TestRules {
                                             file.getFileName() + "-" + subFile.getFileName(),
                                             () -> {
                                                 togglePrints(true);
-                                                String beforePath = subFile.toAbsolutePath() + "\\Input.java";
-                                                String afterPath = subFile.toAbsolutePath() + "\\Output.java";
+                                                String beforePath = subFile.toAbsolutePath() + "/Input.java";
+                                                String afterPath = subFile.toAbsolutePath() + "/Output.java";
 
                                                 // Load input files
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Loading Files");
@@ -83,7 +83,7 @@ class TestRules {
                                                 CtModel model = launcher.getModel();
                                                 String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
                                                 packageName = packageName.replaceAll("\\.", "\\\\");
-                                                String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "\\" + packageName + "\\" + "Input.java")));
+                                                String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + "Input.java")));
                                                 togglePrints(true);
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
                                                 // Compare result with the sample
