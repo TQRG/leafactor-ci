@@ -11,7 +11,6 @@ public class Input {
             a.recycle();
         }
         // Another comment
-//        Yet another comment
         /*
         And yet another comment
          */
