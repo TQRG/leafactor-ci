@@ -2,6 +2,7 @@ package com.leafactor.cli.engine;
 
 import spoon.Launcher;
 import spoon.compiler.Environment;
+import spoon.reflect.CtModel;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.*;
@@ -77,12 +78,13 @@ public class CompilationUnitGroup {
         for (RefactoringRule rule : refactoringRules) {
             launcher.addProcessor(rule);
         }
-        // TODO - Set the source output directory correctly
         Path tempDir = Files.createTempDirectory("temporary-output");
         launcher.setSourceOutputDirectory(tempDir.toFile());
         launcher.run();
-        // TODO - load the resulting content and return it.
-        return "";
+        CtModel model = launcher.getModel();
+        String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
+        packageName = packageName.replaceAll("\\.", "/");
+        return new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + file.getName())));
     }
 
     /**

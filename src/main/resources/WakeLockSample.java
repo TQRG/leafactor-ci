@@ -1,10 +1,14 @@
 package test.resources.com.leafactor.cli.rules.WakeLockRefactoringRule.Legacy;
 
+
+import Context.POWER_SERVICE;
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+
+
+
 
 public class WakeLockSample {
 
@@ -42,6 +46,12 @@ public class WakeLockSample {
             wl.release();
             super.onDestroy();
         }
+
+		@Override
+		void onResume() {
+			super.onResume();
+			wl.acquire();
+		}
     }
 
 //    public class SimpleWakeLockWithoutOnPauseActivity extends Activity {
@@ -93,3 +103,4 @@ public class WakeLockSample {
 //        }
 //    }
 }
+

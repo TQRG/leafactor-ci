@@ -51,7 +51,7 @@ class TestRules {
                                     .map((subFile) -> DynamicTest.dynamicTest(
                                             file.getFileName() + "-" + subFile.getFileName(),
                                             () -> {
-//                                                togglePrints(true);
+                                                togglePrints(true);
                                                 String beforePath = subFile.toAbsolutePath() + "/Input.java";
                                                 String afterPath = subFile.toAbsolutePath() + "/Output.java";
 
@@ -60,7 +60,7 @@ class TestRules {
                                                 String outputSample = new String(Files.readAllBytes(Paths.get(afterPath)));
 
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Finding and refactoring opportunities");
-//                                                togglePrints(false);
+                                                togglePrints(false);
 
                                                 IterationLogger logger = new IterationLogger();
                                                 final Launcher launcher = new Launcher();
@@ -84,7 +84,7 @@ class TestRules {
                                                 String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
                                                 packageName = packageName.replaceAll("\\.", "/");
                                                 String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + "Input.java")));
-//                                                togglePrints(true);
+                                                togglePrints(true);
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
                                                 // Compare result with the sample
                                                 producedFile = producedFile.replaceAll("\t", "    ");

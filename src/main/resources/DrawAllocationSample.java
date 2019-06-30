@@ -1,18 +1,18 @@
 package test.resources.com.leafactor.cli.rules.DrawAllocationRefactoringRule.Legacy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.Button;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+
 /** Some test data for the JavaPerformanceDetector */
 @SuppressWarnings("unused")
 public class DrawAllocationSample extends Button {
@@ -29,10 +29,6 @@ public class DrawAllocationSample extends Button {
 
         // Various allocations:
         new String("foo");
-        String s = new String("bar");
-
-        // This one should not be reported:
-        Integer i = new Integer(5);
 
         // Cached object initialized lazily: should not complain about these
         if (cachedRect == null) {
@@ -45,8 +41,7 @@ public class DrawAllocationSample extends Button {
         boolean b = Boolean.valueOf(true); // auto-boxing
 
         Integer i2 = new Integer(i);
-        Integer i3 = (Integer) new Integer(2);
-        Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
+		myOtherMap.clear();
 
         // Non-allocations
         super.animate();
@@ -83,8 +78,18 @@ public class DrawAllocationSample extends Button {
         @Override
         protected void onDraw(android.graphics.Canvas canvas) {
             super.onDraw(canvas);
-            List<Integer> array = new ArrayList<Integer>();
+			array.clear();
             return;
         }
+
+		private List<Integer> array = new ArrayList<Integer>();
     }
+
+	private String s = new String("bar");
+
+	private Integer i = new Integer(5);
+
+	private Integer i3 = ((Integer) (new Integer(2)));
+
+	private Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
 }
