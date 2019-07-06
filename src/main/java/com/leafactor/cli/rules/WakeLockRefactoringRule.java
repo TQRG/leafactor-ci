@@ -153,7 +153,6 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                             if(statement instanceof CtInvocation) {
                                 CtInvocation invocation = (CtInvocation) statement;
                                 CtExpression target = invocation.getTarget();
-                                System.out.println(target);
                                 if (target.toString().equals(variableName) &&
                                         invocation.getExecutable().getSimpleName().equals("acquire")) {
                                     hasAcquire = true;
@@ -176,7 +175,6 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                             if(statement instanceof CtInvocation) {
                                 CtInvocation invocation = (CtInvocation) statement;
                                 CtExpression target = invocation.getTarget();
-                                System.out.println(target);
                                 if (target.toString().equals(variableName) &&
                                         invocation.getExecutable().getSimpleName().equals("release")) {
                                     hasDestroy = true;

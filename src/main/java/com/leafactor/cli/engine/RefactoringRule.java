@@ -7,6 +7,7 @@ import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtMethod;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
      */
     static <T> List<T> getCtElementsOfInterestWithFilter(CtElement root, Predicate<CtElement> isElementOfInterest, Predicate<CtElement> filter, Class<T> type) {
         if(filter.test(root)) {
-            return List.of();
+            return new ArrayList<T>();
         }
         Stream<T> a = isElementOfInterest.test(root) ? Stream.of(type.cast(root)) : Stream.empty();
         Stream<T> b = root.getDirectChildren().stream()
@@ -124,3 +125,4 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
         return (CtMethod)root;
     }
 }
+

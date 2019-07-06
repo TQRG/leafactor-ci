@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * Represents a group of compilation units defined by a list of files
  */
 public class CompilationUnitGroup {
+
     private List<File> files;
 
     /**
@@ -67,10 +68,10 @@ public class CompilationUnitGroup {
      */
     private String runFile(File file, List<RefactoringRule> refactoringRules) throws IOException {
         System.out.println("FILE:" + file.getName());
-        FileInputStream in = new FileInputStream(file);
+//        FileInputStream in = new FileInputStream(file);
         final Launcher launcher = new Launcher();
         final Environment e = launcher.getEnvironment();
-        e.setLevel("INFO");
+//        e.setLevel("INFO");
         e.setNoClasspath(true);
         e.setAutoImports(true);
         launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment()));
@@ -80,10 +81,16 @@ public class CompilationUnitGroup {
         }
         Path tempDir = Files.createTempDirectory("temporary-output");
         launcher.setSourceOutputDirectory(tempDir.toFile());
-        launcher.run();
+        try {
+            launcher.run();
+        } catch(Exception exception) {
+            System.out.println("Could not read file " + file + "`\nSkipping it...");
+            return null;
+        }
         CtModel model = launcher.getModel();
         String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
         packageName = packageName.replaceAll("\\.", "/");
+
         return new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + file.getName())));
     }
 
@@ -118,7 +125,11 @@ public class CompilationUnitGroup {
         // We save the result, we want to persist only if every file is successfully refactored
         Map<File, String> results = new HashMap<>();
         for (File file : this.files) {
-            results.put(file, this.runFile(file, refactoringRules));
+            String result = this.runFile(file, refactoringRules);
+            if(result != null) {
+                results.put(file, result);
+            }
+
         }
         // Lets persist all the files that we changed
         this.persist(results);

@@ -39,8 +39,20 @@ class TestRules {
     @TestFactory
     Collection<DynamicTest> dynamicTestsWithCollection() throws IOException, URISyntaxException {
         URI uri = TestRules.class.getResource("./").toURI();
+
+        try (Stream<Path> walk = Files.walk(Paths.get("./out/test/resources/com/leafactor/cli/rules/"))) {
+
+            List<String> result = walk.filter(Files::isRegularFile)
+                    .map(x -> x.toString()).collect(Collectors.toList());
+
+            result.forEach(System.out::println);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         File dir = new File(uri);
-        try (Stream<Path> paths = Files.walk(dir.toPath())) {
+        try (Stream<Path> paths =  Files.walk(Paths.get("./out/test/resources/com/leafactor/cli/rules/"))) {
             return paths
                     .filter((path) -> !path.equals(dir.toPath()))
                     .filter(Files::isDirectory)
@@ -51,7 +63,7 @@ class TestRules {
                                     .map((subFile) -> DynamicTest.dynamicTest(
                                             file.getFileName() + "-" + subFile.getFileName(),
                                             () -> {
-                                                togglePrints(true);
+//                                                togglePrints(true);
                                                 String beforePath = subFile.toAbsolutePath() + "/Input.java";
                                                 String afterPath = subFile.toAbsolutePath() + "/Output.java";
 
@@ -60,7 +72,7 @@ class TestRules {
                                                 String outputSample = new String(Files.readAllBytes(Paths.get(afterPath)));
 
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Finding and refactoring opportunities");
-                                                togglePrints(false);
+//                                                togglePrints(false);
 
                                                 IterationLogger logger = new IterationLogger();
                                                 final Launcher launcher = new Launcher();
@@ -84,7 +96,7 @@ class TestRules {
                                                 String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
                                                 packageName = packageName.replaceAll("\\.", "/");
                                                 String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + "Input.java")));
-                                                togglePrints(true);
+//                                                togglePrints(true);
                                                 System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
                                                 // Compare result with the sample
                                                 producedFile = producedFile.replaceAll("\t", "    ");
