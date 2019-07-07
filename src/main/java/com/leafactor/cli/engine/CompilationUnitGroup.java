@@ -20,12 +20,23 @@ import java.util.stream.Collectors;
  */
 public class CompilationUnitGroup {
 
+    private final Launcher launcher;
     private List<File> files;
 
     /**
      * Creates a compilation unit group
      */
     public CompilationUnitGroup() {
+        launcher = new Launcher();
+        Environment e = launcher.getEnvironment();
+        e.setNoClasspath(true);
+        e.setAutoImports(true);
+        launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment()));
+        files = new ArrayList<>();
+    }
+
+    public CompilationUnitGroup(Launcher laucher) {
+        this.launcher = laucher;
         files = new ArrayList<>();
     }
 
@@ -68,13 +79,7 @@ public class CompilationUnitGroup {
      */
     private String runFile(File file, List<RefactoringRule> refactoringRules) throws IOException {
         System.out.println("FILE:" + file.getName());
-//        FileInputStream in = new FileInputStream(file);
-        final Launcher launcher = new Launcher();
-        final Environment e = launcher.getEnvironment();
-//        e.setLevel("INFO");
-        e.setNoClasspath(true);
-        e.setAutoImports(true);
-        launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment()));
+
         launcher.addInputResource(file.getAbsolutePath());
         for (RefactoringRule rule : refactoringRules) {
             launcher.addProcessor(rule);
