@@ -12,6 +12,7 @@ apply plugin: 'java-library'
 
 repositories {
     mavenLocal()
+    maven { url 'http://repo1.maven.org/maven2' }
 }
 
 dependencies {
