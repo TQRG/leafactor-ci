@@ -42,10 +42,7 @@ test {
     }
 }
 
-group = 'com.leafactorci'
-version = '1.0.1'
-sourceCompatibility = 9
-targetCompatibility = 9
+
 
 publishing {
     publications {

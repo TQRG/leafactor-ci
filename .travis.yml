@@ -4,9 +4,7 @@ jdk:
 before_deploy:
 - ./gradlew build
 - mkdir -p $HOME/.gradle/
-- echo "gradle.publish.key=$GRADLE_PUBLISH_KEY" >> $HOME/.gradle/gradle.properties
-- echo "gradle.publish.secret=$GRADLE_PUBLISH_KEY" >> $HOME/.gradle/gradle.properties
-- sed -i "s/(?<=version = ').*(?=')/$TRAVIS_TAG/g" build.gradle
+- sed -i "s/version.*/version=$TRAVIS_TAG/g" gradle.propertie
 deploy:
   - provider: releases
     skip_cleanup: true
@@ -18,7 +16,7 @@ deploy:
       tags: true
       branch: master
   - provider: script
-    script: ./gradlew task :publishPlugins
+    script: ./gradlew task :publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_KEY
     skip_cleanup: true
     on:
       branch: master
