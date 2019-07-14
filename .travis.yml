@@ -1,9 +1,8 @@
 language: java
 jdk:
 - oraclejdk9
-#script: gradlew test
 before_deploy:
-- gradlew build -x test
+- gradlew build
 deploy:
   provider: releases
   skip_cleanup: true
