@@ -3,6 +3,7 @@ package test.resources.com.leafactor.cli.rules.WakeLockRefactoringRule.Legacy;
 
 import Context.POWER_SERVICE;
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;

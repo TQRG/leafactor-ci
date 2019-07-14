@@ -36,72 +36,63 @@ class TestRules {
         System.setOut(on?out:dummy);
     }
 
+    // https://github.com/gradle/gradle/issues/5975
     @TestFactory
     Collection<DynamicTest> dynamicTestsWithCollection() throws IOException, URISyntaxException {
-        URI uri = TestRules.class.getResource("./").toURI();
-
-        try (Stream<Path> walk = Files.walk(Paths.get("./out/test/resources/com/leafactor/cli/rules/"))) {
-
-            List<String> result = walk.filter(Files::isRegularFile)
-                    .map(x -> x.toString()).collect(Collectors.toList());
-
-            result.forEach(System.out::println);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        File dir = new File(uri);
-        try (Stream<Path> paths =  Files.walk(Paths.get("./out/test/resources/com/leafactor/cli/rules/"))) {
+        File resourcesDirectory = new File("src/test/resources/com/leafactor/cli/rules");
+        try (Stream<Path> paths = Files.walk(resourcesDirectory.toPath())) {
             return paths
-                    .filter((path) -> !path.equals(dir.toPath()))
+                    .filter((path) -> !path.equals(resourcesDirectory.toPath()))
                     .filter(Files::isDirectory)
                     .map((file) -> {
                         try (Stream<Path> subPaths = Files.walk(file)) {
                             return subPaths.filter((subFile) -> !subFile.equals(file))
                                     .filter(Files::isDirectory)
-                                    .map((subFile) -> DynamicTest.dynamicTest(
-                                            file.getFileName() + "-" + subFile.getFileName(),
-                                            () -> {
-//                                                togglePrints(true);
-                                                String beforePath = subFile.toAbsolutePath() + "/Input.java";
-                                                String afterPath = subFile.toAbsolutePath() + "/Output.java";
+                                    .map((subFile) -> {
+                                        return DynamicTest.dynamicTest(
+                                                file.getFileName() + "-" + subFile.getFileName(),
+                                                () -> {
+    //                                                togglePrints(true);
+                                                    String beforePath = subFile.toAbsolutePath() + "/Input.java";
+                                                    String afterPath = subFile.toAbsolutePath() + "/Output.java";
 
-                                                // Load input files
-                                                System.out.println("[" + subFile.getFileName().toString() + "] Loading Files");
-                                                String outputSample = new String(Files.readAllBytes(Paths.get(afterPath)));
+                                                    // Load input files
+                                                    System.out.println("SUBFILE: " + subFile.toAbsolutePath());
+                                                    System.out.println("[" + subFile.getFileName().toString() + "] Loading Files");
+                                                    String outputSample = new String(Files.readAllBytes(Paths.get(afterPath)));
 
-                                                System.out.println("[" + subFile.getFileName().toString() + "] Finding and refactoring opportunities");
-//                                                togglePrints(false);
+                                                    System.out.println("[" + subFile.getFileName().toString() + "] Finding and refactoring opportunities");
+    //                                                togglePrints(false);
 
-                                                IterationLogger logger = new IterationLogger();
-                                                final Launcher launcher = new Launcher();
-                                                final Environment e = launcher.getEnvironment();
-                                                e.setLevel("INFO");
-                                                e.setNoClasspath(true);
-                                                e.setAutoImports(true);
-                                                launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
-                                                );
-                                                launcher.addInputResource(beforePath);
+                                                    IterationLogger logger = new IterationLogger();
+                                                    final Launcher launcher = new Launcher();
+                                                    final Environment e = launcher.getEnvironment();
+                                                    e.setLevel("INFO");
+                                                    e.setNoClasspath(true);
+                                                    e.setAutoImports(true);
+                                                    launcher.getEnvironment().setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment())
+                                                    );
+                                                    launcher.addInputResource(beforePath);
 
-                                                Class<?> clazz = Class.forName("com.leafactor.cli.rules." + file.getFileName().toString());
-                                                Constructor<?> ctor = clazz.getConstructor(IterationLogger.class);
-                                                RefactoringRule rule = (RefactoringRule) ctor.newInstance(logger);
-                                                launcher.addProcessor(rule);
-                                                Path tempDir = Files.createTempDirectory("temporary-output");
-                                                System.out.println("TempDir: " + tempDir);
-                                                launcher.setSourceOutputDirectory(tempDir.toFile());
-                                                launcher.run();
-                                                CtModel model = launcher.getModel();
-                                                String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
-                                                packageName = packageName.replaceAll("\\.", "/");
-                                                String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + "Input.java")));
-//                                                togglePrints(true);
-                                                System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
-                                                // Compare result with the sample
-                                                producedFile = producedFile.replaceAll("\t", "    ");
-                                                assertEquals(outputSample, producedFile);
-                                            })).collect(Collectors.toList());
+                                                    Class<?> clazz = Class.forName("com.leafactor.cli.rules." + file.getFileName().toString());
+                                                    Constructor<?> ctor = clazz.getConstructor(IterationLogger.class);
+                                                    RefactoringRule rule = (RefactoringRule) ctor.newInstance(logger);
+                                                    launcher.addProcessor(rule);
+                                                    Path tempDir = Files.createTempDirectory("temporary-output");
+                                                    System.out.println("TempDir: " + tempDir);
+                                                    launcher.setSourceOutputDirectory(tempDir.toFile());
+                                                    launcher.run();
+                                                    CtModel model = launcher.getModel();
+                                                    String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
+                                                    packageName = packageName.replaceAll("\\.", "/");
+                                                    String producedFile = new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + "Input.java")));
+    //                                                togglePrints(true);
+                                                    System.out.println("[" + subFile.getFileName().toString() + "] Comparing result");
+                                                    // Compare result with the sample
+                                                    producedFile = producedFile.replaceAll("\t", "    ");
+                                                    assertEquals(outputSample, producedFile);
+                                                });
+                                    }).collect(Collectors.toList());
                         } catch (IOException e) {
                             return null;
                         }
