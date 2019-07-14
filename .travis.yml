@@ -4,7 +4,7 @@ jdk:
 before_deploy:
 - ./gradlew build
 - mkdir -p $HOME/.gradle/
-- sed -i "s/version.*/version=$TRAVIS_TAG/g" gradle.propertie
+- sed -i "s/version.*/version=$TRAVIS_TAG/g" gradle.properties
 deploy:
   - provider: releases
     skip_cleanup: true
