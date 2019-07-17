@@ -42,8 +42,6 @@ test {
     }
 }
 
-
-
 publishing {
     publications {
         maven(MavenPublication) {
@@ -73,7 +71,6 @@ pluginBundle {
         leafactorCI {
             // id is captured from java-gradle-plugin configuration
             displayName = 'Leafactor CI'
-            id = 'com.leafactorci'
         }
     }
 }
