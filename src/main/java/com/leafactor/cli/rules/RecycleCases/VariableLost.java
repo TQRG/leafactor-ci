@@ -7,6 +7,7 @@ import spoon.reflect.code.*;
 import spoon.reflect.declaration.CtElement;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -19,22 +20,22 @@ public class VariableLost extends CaseOfInterest {
     }
 
     private static boolean isInsideLambda(CtElement current, DetectionPhaseContext context) {
-        CtLambda result = RefactoringRule.getClosestTypeParent(current, CtLambda.class, List.of(context.block));
+        CtLambda result = RefactoringRule.getClosestTypeParent(current, CtLambda.class, Arrays.asList(new CtElement[] {context.block}));
         return result != null;
     }
 
     private static boolean isInsideReturn(CtElement current, DetectionPhaseContext context) {
-        CtReturn result = RefactoringRule.getClosestTypeParent(current, CtReturn.class, List.of(context.block));
+        CtReturn result = RefactoringRule.getClosestTypeParent(current, CtReturn.class, Arrays.asList(new CtElement[] {context.block}));
         return result != null && result.getReturnedExpression() == current;
     }
 
     private static boolean isInsideInvocation(CtElement current, DetectionPhaseContext context) {
-        CtInvocation result = RefactoringRule.getClosestTypeParent(current, CtInvocation.class, List.of(context.block));
+        CtInvocation result = RefactoringRule.getClosestTypeParent(current, CtInvocation.class, Arrays.asList(new CtElement[] {context.block}));
         return result != null && result.getArguments().contains(current);
     }
 
     private static boolean isInsideBlock(CtElement current, DetectionPhaseContext context) {
-        CtBlock result = RefactoringRule.getClosestTypeParent(current, CtBlock.class, List.of(context.block));
+        CtBlock result = RefactoringRule.getClosestTypeParent(current, CtBlock.class, Arrays.asList(new CtElement[] {context.block}));
         return result != null;
     }
 
