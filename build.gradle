@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
     implementation(localGroovy())
+    implementation 'com.android.tools.build:gradle:2.3.0'
     implementation 'fr.inria.gforge.spoon:spoon-core:7.5.0-beta-21'
     implementation 'io.github.java-diff-utils:java-diff-utils:4.0'
     implementation 'info.picocli:picocli:3.9.5'
