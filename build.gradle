@@ -5,13 +5,12 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'groovy'
-    id 'java-gradle-plugin'
+    id 'java-library'
     id "com.gradle.plugin-publish" version "0.10.1"
 }
 
-apply plugin: 'java-library'
-
 repositories {
+    google()
     mavenLocal()
     maven { url 'http://repo1.maven.org/maven2' }
     jcenter()
@@ -20,7 +19,6 @@ repositories {
 dependencies {
     implementation(gradleApi())
     implementation(localGroovy())
-    implementation 'com.android.tools.build:gradle:2.3.0'
     implementation 'fr.inria.gforge.spoon:spoon-core:7.5.0-beta-21'
     implementation 'io.github.java-diff-utils:java-diff-utils:4.0'
     implementation 'info.picocli:picocli:3.9.5'
@@ -28,6 +26,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.1"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.3.1"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.3.1"
+    implementation 'com.android.tools.build:gradle:3.4.2'
 }
 
 jar {
@@ -51,17 +50,6 @@ publishing {
     }
 }
 
-apply plugin: "com.gradle.plugin-publish"
-
-gradlePlugin {
-    plugins {
-        leafactorCI {
-            id = 'com.leafactorci'
-            implementationClass = 'com.leafactor.gradle.plugin.LeafactorCIPlugin'
-        }
-    }
-}
-
 pluginBundle {
     website = 'https://github.com/TQRG'
     vcsUrl = 'https://github.com/TQRG/leafactor-ci'
@@ -72,6 +60,7 @@ pluginBundle {
         leafactorCI {
             // id is captured from java-gradle-plugin configuration
             displayName = 'Leafactor CI'
+            id = 'com.leafactorci'
         }
     }
 }

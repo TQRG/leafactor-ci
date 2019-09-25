@@ -89,6 +89,7 @@ public class CompilationUnitGroup {
         try {
             launcher.run();
         } catch(Exception exception) {
+            System.out.println(exception.getMessage());
             System.out.println("Could not read file " + file + "`\nSkipping it...");
             return null;
         }
@@ -129,14 +130,32 @@ public class CompilationUnitGroup {
 
         // We save the result, we want to persist only if every file is successfully refactored
         Map<File, String> results = new HashMap<>();
-        for (File file : this.files) {
-            String result = this.runFile(file, refactoringRules);
-            if(result != null) {
-                results.put(file, result);
-            }
 
+        for (RefactoringRule rule : refactoringRules) {
+            launcher.addProcessor(rule);
         }
+
+        for (File file : this.files) {
+            launcher.addInputResource(file.getAbsolutePath());
+        }
+
+        Path tempDir = Files.createTempDirectory("temporary-output");
+        System.out.println("Temporary Directory: " + tempDir);
+
+        launcher.setSourceOutputDirectory(tempDir.toFile());
+
+//        CtModel model = launcher.getModel();
+//        String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
+//        packageName = packageName.replaceAll("\\.", "/");
+
+        try {
+            launcher.run();
+        } catch(Exception exception) {
+            System.out.println(exception.getMessage());
+            return;
+        }
+
         // Lets persist all the files that we changed
-        this.persist(results);
+//        this.persist(results, packageName);
     }
 }
