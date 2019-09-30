@@ -5,13 +5,13 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.UnionFileCollection;
 
 public class LauncherExtension  {
-    private FileCollection classPath = new UnionFileCollection();
+    private FileCollection files = new UnionFileCollection();
 
-    public FileCollection getClassPath() {
-        return classPath;
+    public FileCollection getFiles() {
+        return files;
     }
 
-    public void setClassPath(FileCollection classPath) {
-        this.classPath = classPath;
+    public void setFiles(FileCollection files) {
+        this.files = files;
     }
 }

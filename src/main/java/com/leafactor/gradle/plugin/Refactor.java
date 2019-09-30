@@ -9,8 +9,12 @@ import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
 import com.leafactor.cli.rules.WakeLockRefactoringRule;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.UnionFileCollection;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
 import spoon.compiler.Environment;
@@ -79,7 +83,24 @@ public class Refactor extends DefaultTask {
         // Migrate to array of string
         String [] classPath = new String[dependencyPaths.size()];
         for(int i = 0; i < dependencyPaths.size(); i++) {
-            classPath[i] = dependencyPaths.get(i);
+            String originalFile = dependencyPaths.get(i);
+            System.out.println("-------------------------------------------------");
+            if(dependencyPaths.get(i).endsWith(".aar")) {
+                String destination = originalFile.substring(0, originalFile.length() - 4);
+                System.out.println("Source: " + originalFile);
+                System.out.println("Destination: " + destination);
+                try {
+                    ZipFile zipFile = new ZipFile(originalFile);
+                    zipFile.extractAll(destination);
+                } catch (ZipException e) {
+                    e.printStackTrace();
+                }
+                classPath[i] = destination + "/classes.jar";
+            } else {
+                classPath[i] = originalFile;
+            }
+            System.out.println("Dependency added: " + classPath[i]);
+            System.out.println("-------------------------------------------------");
         }
 
         // Configure the environment to use a custom classPath
@@ -92,39 +113,39 @@ public class Refactor extends DefaultTask {
         CompilationUnitGroup group = new CompilationUnitGroup(launcher);
         System.out.println("PROJECT PATH:" + Paths.get(project.getProjectDir().toPath().toString(), "src", "main", "java"));
 
+        System.out.println(appExtension.getSourceSets().getByName("main").getRes());
+
+        // todo - Add application variant support
+//        appExtension.getApplicationVariants().forEach((applicationVariant -> {
+//            System.out.println("Variant [" + applicationVariant.getName() + "]");
+//            applicationVariant.getOutputs().forEach(baseVariantOutput -> {
+//
+//            });
+//        }));
+        System.out.println("Extension" + extension);
         try {
-            // todo - adding a single file for testing purposes
-            group.add(Paths.get(project.getProjectDir().toPath().toString(), "src", "main", "java").toFile());
+            if(extension != null) {
+                if (extension.getFiles() instanceof UnionFileCollection) {
+                    UnionFileCollection collection = (UnionFileCollection) extension.getFiles();
+                    System.out.println("extension.getFiles()" + extension.getFiles());
+                    for(FileCollection fileCollection : collection.getSources()) {
+                        for(File file : fileCollection.getFiles()) {
+                            System.out.println("File: " + file.getAbsolutePath());
+                            group.add(file);
+                        }
+                    }
+                }
+
+            }
         } catch (IOException e) {
             System.out.println("Error creating compilation group with file: " + Paths.get(project.getProjectDir().toPath().toString(), "src"));
         }
-//
-////        try {
-////            Files.walk(Paths.get(project.getProjectDir().toPath().toString(), "src")).forEach((path -> {
-////                File file = path.toFile();
-////                if (!file.exists()) {
-////                    System.out.println("File does not exist: " + file.getAbsolutePath());
-////                    return;
-////                }
-////
-////                if ((file.isDirectory() || file.getAbsolutePath().endsWith(".java"))) {
-////                    try {
-////                        group.add(file);
-////                    } catch (IOException e) {
-////                        System.out.println("Error creating compilation group with file: " + file.getAbsolutePath());
-////                    }
-////                } else {
-//////                    System.out.println("Invalid file: " + file.getAbsolutePath());
-////                }
-////            }));
-////        } catch (IOException e) {
-////            e.printStackTrace();
-////        }
-//
+
         try {
             // Run the group of compilation units with the set of refactoring rules
             group.run(refactoringRules);
         } catch (Exception e) {
+            // Todo - Be more specific
             System.out.println("Something went wrong.");
         }
     }
