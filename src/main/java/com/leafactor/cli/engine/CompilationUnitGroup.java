@@ -9,10 +9,13 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +25,7 @@ public class CompilationUnitGroup {
 
     private final Launcher launcher;
     private List<File> files;
+    private File sourceOutputDirectory;
 
     /**
      * Creates a compilation unit group
@@ -38,6 +42,14 @@ public class CompilationUnitGroup {
     public CompilationUnitGroup(Launcher laucher) {
         this.launcher = laucher;
         files = new ArrayList<>();
+    }
+
+    public File getSourceOutputDirectory() {
+        return sourceOutputDirectory;
+    }
+
+    public void setSourceOutputDirectory(File sourceOutputDirectory) {
+        this.sourceOutputDirectory = sourceOutputDirectory;
     }
 
     /**
@@ -69,49 +81,37 @@ public class CompilationUnitGroup {
         return files.stream().filter(file -> file.getName().endsWith(".java")).collect(Collectors.toList());
     }
 
-    /**
-     * Executes a refactoring job for a list of refacoring rules over a given .java file
-     *
-     * @param file             Java file provided (.java)
-     * @param refactoringRules List of refactoring rules
-     * @return The entire refactored result file content  as a string
-     * @throws FileNotFoundException Thrown when the file is not found
-     */
-    private String runFile(File file, List<RefactoringRule> refactoringRules) throws IOException {
-        System.out.println("FILE:" + file.getName());
-
-        launcher.addInputResource(file.getAbsolutePath());
-        for (RefactoringRule rule : refactoringRules) {
-            launcher.addProcessor(rule);
+    private Map<File, String> generatePackageNameMap() {
+        Map<File, String> packageNameMap = new HashMap<>();
+        for(File file : this.files) {
+            BufferedReader reader;
+            String loadedLines = "";
+            String packageName = null;
+            try {
+                reader = new BufferedReader(new FileReader(file));
+                String line = reader.readLine();
+                Pattern pattern = Pattern.compile("package\\s+([a-zA_Z_][\\.\\w]*);");
+                loadedLines = line;
+                System.out.println(loadedLines);
+                while (line != null) {
+                    Matcher matcher = pattern.matcher(loadedLines);
+                    if(matcher.find()) {
+                        packageName = matcher.group(1);
+                        break;
+                    }
+                    line = reader.readLine();
+                    loadedLines += line + "\n";
+                }
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(packageName == null) {
+                throw new RuntimeException("Could not find package name for source file " + file);
+            }
+            packageNameMap.put(file, packageName);
         }
-        Path tempDir = Files.createTempDirectory("temporary-output");
-        launcher.setSourceOutputDirectory(tempDir.toFile());
-        try {
-            launcher.run();
-        } catch(Exception exception) {
-            System.out.println(exception.getMessage());
-            System.out.println("Could not read file " + file + "`\nSkipping it...");
-            return null;
-        }
-        CtModel model = launcher.getModel();
-        String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
-        packageName = packageName.replaceAll("\\.", "/");
-
-        return new String(Files.readAllBytes(Paths.get(tempDir + "/" + packageName + "/" + file.getName())));
-    }
-
-    /**
-     * Persists a set of files with the corresponding results (string) through a map
-     *
-     * @param results A Map where each key is a java File and a string is the content
-     * @throws FileNotFoundException Thrown when a file is not found
-     */
-    private void persist(Map<File, String> results) throws FileNotFoundException {
-        for (File file : results.keySet()) {
-            PrintWriter pw = new PrintWriter(file);
-            pw.println(results.get(file));
-            pw.close();
-        }
+        return packageNameMap;
     }
 
     /**
@@ -124,12 +124,10 @@ public class CompilationUnitGroup {
         if (refactoringRules == null) {
             throw new RuntimeException("The refactoring rules list cannot be null");
         }
+
         if (refactoringRules.size() == 0) {
             throw new RuntimeException("The refactoring rules list cannot be empty");
         }
-
-        // We save the result, we want to persist only if every file is successfully refactored
-        Map<File, String> results = new HashMap<>();
 
         for (RefactoringRule rule : refactoringRules) {
             launcher.addProcessor(rule);
@@ -139,23 +137,42 @@ public class CompilationUnitGroup {
             launcher.addInputResource(file.getAbsolutePath());
         }
 
-        Path tempDir = Files.createTempDirectory("temporary-output");
-        System.out.println("Temporary Directory: " + tempDir);
-
-        launcher.setSourceOutputDirectory(tempDir.toFile());
-
-//        CtModel model = launcher.getModel();
-//        String packageName = model.getAllPackages().toArray()[model.getAllPackages().size() - 1].toString();
-//        packageName = packageName.replaceAll("\\.", "/");
+        boolean replaceOriginal = sourceOutputDirectory == null;
+        if(!replaceOriginal) {
+            System.out.println("Outputting files to " + sourceOutputDirectory);
+            launcher.setSourceOutputDirectory(sourceOutputDirectory);
+        } else {
+            Path tempDir = Files.createTempDirectory("temporary-output");
+            System.out.println("Outputting files to " + tempDir);
+            launcher.setSourceOutputDirectory(tempDir.toFile());
+            sourceOutputDirectory = tempDir.toFile();
+        }
 
         try {
             launcher.run();
+            if (replaceOriginal) {
+                Map<File, String> packageNameMap = this.generatePackageNameMap();
+                for(File file : files) {
+                    String packageName = packageNameMap.get(file);
+                    String fileName = file.getName();
+                    System.out.println("Package: " + packageName);
+                    System.out.println("File Name: " + fileName);
+                    String tempFilePath = sourceOutputDirectory + "/" +
+                            packageName
+                                    .replaceAll("\\.","/")
+                                    .replaceAll("\\s","") +
+                            "/" + fileName;
+                    System.out.println("Absolute path: " + tempFilePath);
+                    System.out.println("Replacing original files.");
+                    if(!new File(tempFilePath).exists()) {
+                        System.out.println("Warning, skipping file " + tempFilePath);
+                    } else {
+                        Files.copy(Paths.get(tempFilePath), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
         } catch(Exception exception) {
-            System.out.println(exception.getMessage());
-            return;
+            exception.printStackTrace();
         }
-
-        // Lets persist all the files that we changed
-//        this.persist(results, packageName);
     }
 }

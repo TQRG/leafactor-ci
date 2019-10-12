@@ -3,19 +3,15 @@ package com.leafactor.cli.rules;
 import com.leafactor.cli.engine.*;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.Cases.VariableDeclared;
-import com.leafactor.cli.rules.DrawAllocationCases.ObjectAllocation;
 import com.leafactor.cli.rules.WakeLockCases.WakeLockAcquired;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.*;
 import spoon.reflect.factory.Factory;
-import spoon.reflect.factory.SubFactory;
-import spoon.reflect.reference.CtExecutableReference;
 import spoon.reflect.reference.CtTypeReference;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implements RefactoringRule<CtClass> {

@@ -18,6 +18,9 @@ import org.gradle.api.internal.file.UnionFileCollection;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
 import spoon.compiler.Environment;
+import spoon.processing.Processor;
+import spoon.reflect.declaration.CtElement;
+import spoon.reflect.visitor.DefaultJavaPrettyPrinter;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.File;
@@ -25,16 +28,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 
 public class Refactor extends DefaultTask {
     private Project project;
+    private LauncherExtension launcherExtension;
 
-    void init(Project project) {
+    void init(Project project, LauncherExtension launcherExtension) {
         this.project = project;
+        this.launcherExtension = launcherExtension;
     }
 
     @TaskAction
@@ -57,9 +59,6 @@ public class Refactor extends DefaultTask {
                     System.out.println("NAME"+ resolvedArtifact.getName());
                     dependencyPaths.add(resolvedArtifact.getFile().getAbsolutePath());
                 });
-
-        // Todo - Launcher extension is not in use for now.
-        LauncherExtension extension = project.getExtensions().findByType(LauncherExtension.class);
         IterationLogger logger = new IterationLogger();
         List<RefactoringRule> refactoringRules = new ArrayList<>();
         // Adding all the refactoring rules
@@ -107,45 +106,57 @@ public class Refactor extends DefaultTask {
         environment.setNoClasspath(false);
         environment.setSourceClasspath(classPath);
         environment.setAutoImports(true);
-        environment.setPrettyPrinterCreator(() -> new SniperJavaPrettyPrinter(launcher.getEnvironment()));
+        environment.setPrettyPrinterCreator(() -> {
+            DefaultJavaPrettyPrinter printer = new DefaultJavaPrettyPrinter(environment);
+            List<Processor<CtElement>> preprocessors = Collections.unmodifiableList(new ArrayList());
+            printer.setIgnoreImplicit(true);
+            printer.setPreprocessors(preprocessors);
+            return printer;
+        });
 
         // Create a group of compilation units
-        CompilationUnitGroup group = new CompilationUnitGroup(launcher);
+        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
         System.out.println("PROJECT PATH:" + Paths.get(project.getProjectDir().toPath().toString(), "src", "main", "java"));
 
-        System.out.println(appExtension.getSourceSets().getByName("main").getRes());
-
         // todo - Add application variant support
+//        System.out.println(appExtension.getSourceSets().getByName("main").getRes());
 //        appExtension.getApplicationVariants().forEach((applicationVariant -> {
 //            System.out.println("Variant [" + applicationVariant.getName() + "]");
 //            applicationVariant.getOutputs().forEach(baseVariantOutput -> {
 //
 //            });
 //        }));
-        System.out.println("Extension" + extension);
-        try {
-            if(extension != null) {
-                if (extension.getFiles() instanceof UnionFileCollection) {
-                    UnionFileCollection collection = (UnionFileCollection) extension.getFiles();
-                    System.out.println("extension.getFiles()" + extension.getFiles());
-                    for(FileCollection fileCollection : collection.getSources()) {
-                        for(File file : fileCollection.getFiles()) {
-                            System.out.println("File: " + file.getAbsolutePath());
-                            group.add(file);
-                        }
-                    }
-                }
 
+        File outputDirectory = null;
+        if(launcherExtension.getSourceOutputDirectory() != null) {
+            outputDirectory = new File(launcherExtension.getSourceOutputDirectory());
+        }
+
+        if(outputDirectory != null && !outputDirectory.isDirectory()) {
+            throw new RuntimeException("No such directory " + launcherExtension.getSourceOutputDirectory());
+        }
+
+        if(outputDirectory != null) {
+            compilationUnitGroup.setSourceOutputDirectory(outputDirectory);
+        }
+
+        System.out.println("Extension" + launcherExtension);
+        if(launcherExtension != null) {
+            for (String file : launcherExtension.getFiles()) {
+                System.out.println("file" + file);
+                try {
+                    compilationUnitGroup.add(new File(file));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (IOException e) {
-            System.out.println("Error creating compilation group with file: " + Paths.get(project.getProjectDir().toPath().toString(), "src"));
         }
 
         try {
             // Run the group of compilation units with the set of refactoring rules
-            group.run(refactoringRules);
+            compilationUnitGroup.run(refactoringRules);
         } catch (Exception e) {
-            // Todo - Be more specific
+            // Todo - Be more specific.
             System.out.println("Something went wrong.");
         }
     }

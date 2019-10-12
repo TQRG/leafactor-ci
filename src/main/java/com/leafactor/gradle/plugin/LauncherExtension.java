@@ -1,17 +1,25 @@
 package com.leafactor.gradle.plugin;
 
-
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.file.UnionFileCollection;
+import java.util.ArrayList;
 
 public class LauncherExtension  {
-    private FileCollection files = new UnionFileCollection();
+    private ArrayList<String> files;
 
-    public FileCollection getFiles() {
+    public String getSourceOutputDirectory() {
+        return sourceOutputDirectory;
+    }
+
+    public void setSourceOutputDirectory(String sourceOutputDirectory) {
+        this.sourceOutputDirectory = sourceOutputDirectory;
+    }
+
+    private String sourceOutputDirectory;
+
+    public ArrayList<String> getFiles() {
         return files;
     }
 
-    public void setFiles(FileCollection files) {
+    public void setFiles(ArrayList<String> files) {
         this.files = files;
     }
 }
