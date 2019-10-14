@@ -2,9 +2,12 @@ package com.leafactor.gradle.plugin;
 
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.AppPlugin;
+import com.android.builder.model.SourceProvider;
 import com.leafactor.cli.engine.CompilationUnitGroup;
 import com.leafactor.cli.engine.RefactoringRule;
+import com.leafactor.cli.engine.logging.IterationLogEntry;
 import com.leafactor.cli.engine.logging.IterationLogger;
+import com.leafactor.cli.engine.logging.IterationPhaseLogEntry;
 import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
 import com.leafactor.cli.rules.ViewHolderRefactoringRule;
@@ -13,8 +16,10 @@ import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.UnionFileCollection;
+import org.gradle.api.tasks.SourceTask;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
 import spoon.compiler.Environment;
@@ -28,7 +33,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Refactor extends DefaultTask {
     private Project project;
@@ -40,7 +47,7 @@ public class Refactor extends DefaultTask {
     }
 
     @TaskAction
-    public void task() {
+    public void task() throws IOException {
         // Check if the Android AppPlugin is present
         if (!project.getPlugins().hasPlugin(AppPlugin.class)) {
             throw new RuntimeException("should be declared after 'com.android.application'");
@@ -51,25 +58,13 @@ public class Refactor extends DefaultTask {
         // We will hold all the resolved dependency paths in a List of Strings
         final List<String> dependencyPaths = new ArrayList<>();
         // Getting the resolved configurations and gathering the file dependencies.
-        // Note: Requires access to the implementation configuration, add in gradle:
-        //  - configurations.implementation.setCanBeResolved(true)
-        //  - configurations.api.setCanBeResolved(true)
+        if (project.getConfigurations().getByName("implementation").getState() == Configuration.State.UNRESOLVED) {
+            project.getConfigurations().getByName("implementation").setCanBeResolved(true);
+        }
         project.getConfigurations().getByName("implementation").getResolvedConfiguration().getResolvedArtifacts()
                 .forEach(resolvedArtifact -> {
-                    System.out.println("NAME"+ resolvedArtifact.getName());
                     dependencyPaths.add(resolvedArtifact.getFile().getAbsolutePath());
                 });
-        IterationLogger logger = new IterationLogger();
-        List<RefactoringRule> refactoringRules = new ArrayList<>();
-        // Adding all the refactoring rules
-        refactoringRules.add(new RecycleRefactoringRule(logger));
-        refactoringRules.add(new ViewHolderRefactoringRule(logger));
-        refactoringRules.add(new DrawAllocationRefactoringRule(logger));
-        refactoringRules.add(new WakeLockRefactoringRule(logger));
-
-        // Creating the spoon launcher
-        Launcher launcher = new Launcher();
-        Environment environment = launcher.getEnvironment();
 
         // Get the SDK directory and the current API LEVEL.
         File sdkDirectory = appExtension.getSdkDirectory();
@@ -79,15 +74,124 @@ public class Refactor extends DefaultTask {
         String androidJarPath = sdkDirectory.getAbsolutePath() + "/platforms/" + APILevel + "/android.jar";
         dependencyPaths.add(androidJarPath);
 
-        // Migrate to array of string
-        String [] classPath = new String[dependencyPaths.size()];
-        for(int i = 0; i < dependencyPaths.size(); i++) {
+        String projectPath = project.getProjectDir().toPath().toString();
+        System.out.println("PROJECT PATH: " + projectPath);
+
+        appExtension.getApplicationVariants().forEach((applicationVariant -> {
+            try {
+                String flavorName = applicationVariant.getFlavorName();
+                String buildTypeName = applicationVariant.getBuildType().getName();
+                String variantName = applicationVariant.getName();
+                String variantNameCapitalized = variantName.substring(0, 1).toUpperCase() + variantName.substring(1);
+                //    generated/aidl_source_output_dir/{variant}/compile{variant.capitalize}Aidl/out
+                //    generated/not_namespaced_r_class_sources/{variant}/process{variant.capitalize}Resources/r/
+                //    generated/source/buildConfig/{flavour}/{buildType}
+                String aidlFilesDir = String.format("%s/build/generated/aidl_source_output_dir/%s/compile%sAidl/out", projectPath, variantName, variantNameCapitalized);
+                String rFilesDir = String.format("%s/build/generated/not_namespaced_r_class_sources/%s/process%sResources/r", projectPath, variantName, variantNameCapitalized);
+                String buildConfigFileDir = String.format("%s/build/generated/source/buildConfig/%s/%s", projectPath, flavorName, buildTypeName);
+                String mainFilesDir = Paths.get(projectPath, "src", "main", "java").toString();
+                String flavorFilesDir = Paths.get(projectPath, "src", flavorName, "java").toString();
+
+                System.out.println("AIDL Files Dir: " + aidlFilesDir);
+                System.out.println("R Files Dir: " + rFilesDir);
+                System.out.println("BuildConfig File Dir: " + buildConfigFileDir);
+                System.out.println("Main Files Dir: " + mainFilesDir);
+                System.out.println("Flavor Files Dir: " + flavorFilesDir);
+
+                // Creating the spoon launcher
+                Launcher launcher = new Launcher();
+                Environment environment = launcher.getEnvironment();
+
+                // Configure the environment to use a custom classPath
+                List<String> flavorDependencies = new ArrayList<>(dependencyPaths);
+                if (project.getConfigurations().getByName(flavorName + "Implementation").getState() == Configuration.State.UNRESOLVED) {
+                    project.getConfigurations().getByName(flavorName + "Implementation").setCanBeResolved(true);
+                }
+                project.getConfigurations().getByName(flavorName + "Implementation").getResolvedConfiguration().getResolvedArtifacts()
+                        .forEach(resolvedArtifact -> {
+                            flavorDependencies.add(resolvedArtifact.getFile().getAbsolutePath());
+                        });
+                environment.setNoClasspath(false);
+                environment.setSourceClasspath(dependenciesToClassPath(flavorDependencies));
+                environment.setAutoImports(true);
+                environment.setPrettyPrinterCreator(() -> {
+                    // Todo - Temporary fix, awaiting final fix from Spoon collaborators
+                    // https://github.com/INRIA/spoon/pull/3136
+                    DefaultJavaPrettyPrinter printer = new DefaultJavaPrettyPrinter(environment);
+                    List<Processor<CtElement>> preprocessors = Collections.unmodifiableList(new ArrayList());
+                    printer.setIgnoreImplicit(true);
+                    printer.setPreprocessors(preprocessors);
+                    return printer;
+                });
+
+                CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
+
+                // Optional output directory
+                File outputDirectory = null;
+                if (launcherExtension.getSourceOutputDirectory() != null) {
+                    outputDirectory = new File(launcherExtension.getSourceOutputDirectory());
+                }
+
+                if (outputDirectory != null && !outputDirectory.isDirectory()) {
+                    throw new RuntimeException("No such directory " + launcherExtension.getSourceOutputDirectory());
+                }
+
+                if (outputDirectory != null) {
+                    File leafactorGenDir = new File(outputDirectory.getAbsolutePath() + "/leafactor-ci/" + variantName);
+                    if (!leafactorGenDir.exists() && !leafactorGenDir.mkdirs()) {
+                        throw new RuntimeException("Could not create directory " + leafactorGenDir.getAbsolutePath());
+                    }
+                    compilationUnitGroup.setSourceOutputDirectory(leafactorGenDir);
+                }
+
+                compilationUnitGroup.add(new File(aidlFilesDir));
+                compilationUnitGroup.add(new File(rFilesDir));
+                compilationUnitGroup.add(new File(buildConfigFileDir));
+                compilationUnitGroup.add(new File(mainFilesDir));
+                compilationUnitGroup.add(new File(flavorFilesDir));
+
+                // Run the group of compilation units with the set of refactoring rules
+                IterationLogger logger = new IterationLogger();
+                List<RefactoringRule> refactoringRules = new ArrayList<>();
+                // Adding all the refactoring rules
+                refactoringRules.add(new RecycleRefactoringRule(logger));
+                refactoringRules.add(new ViewHolderRefactoringRule(logger));
+                refactoringRules.add(new DrawAllocationRefactoringRule(logger));
+                refactoringRules.add(new WakeLockRefactoringRule(logger));
+
+                System.out.println("Running");
+                compilationUnitGroup.run(refactoringRules);
+//                System.out.println("Logging results:");
+                for (IterationLogEntry entry : logger.getLogs()) {
+//                    System.out.println("Log entry:");
+//                    System.out.println("Timestamp: " + entry.getTimeStamp());
+//                    System.out.println("Name: " + entry.getName());
+//                    System.out.println("Description: " + entry.getDescription());
+//                    System.out.println("Refactoring rule: " + entry.getRule().getClass().getName());
+                    if (entry instanceof IterationPhaseLogEntry) {
+                        IterationPhaseLogEntry iterationPhaseLogEntry = (IterationPhaseLogEntry) entry;
+                        Duration duration = iterationPhaseLogEntry.getPhaseDuration();
+//                        System.out.println(iterationPhaseLogEntry.getStartPhaseTimestamp());
+//                        System.out.println(iterationPhaseLogEntry.getEndPhaseTimestamp());
+//                        System.out.println("Duration: " + duration.toNanos());
+                    }
+                }
+            } catch (Exception e) {
+                // Todo - Be more specific.
+                System.out.println("Something went wrong.");
+            }
+        }));
+    }
+
+    private String[] dependenciesToClassPath(List<String> dependencyPaths) throws IOException {
+        // Migrate list to array of string
+        String[] classPath = new String[dependencyPaths.size()];
+        for (int i = 0; i < dependencyPaths.size(); i++) {
             String originalFile = dependencyPaths.get(i);
-            System.out.println("-------------------------------------------------");
-            if(dependencyPaths.get(i).endsWith(".aar")) {
-                String destination = originalFile.substring(0, originalFile.length() - 4);
-                System.out.println("Source: " + originalFile);
-                System.out.println("Destination: " + destination);
+            if (dependencyPaths.get(i).endsWith(".aar")) {
+                // AAR Files need to be converted to JAR in order to be included
+                Path tempDirectory = Files.createTempDirectory("aarFileExtraction");
+                String destination = tempDirectory.toAbsolutePath().toString();
                 try {
                     ZipFile zipFile = new ZipFile(originalFile);
                     zipFile.extractAll(destination);
@@ -98,66 +202,7 @@ public class Refactor extends DefaultTask {
             } else {
                 classPath[i] = originalFile;
             }
-            System.out.println("Dependency added: " + classPath[i]);
-            System.out.println("-------------------------------------------------");
         }
-
-        // Configure the environment to use a custom classPath
-        environment.setNoClasspath(false);
-        environment.setSourceClasspath(classPath);
-        environment.setAutoImports(true);
-        environment.setPrettyPrinterCreator(() -> {
-            DefaultJavaPrettyPrinter printer = new DefaultJavaPrettyPrinter(environment);
-            List<Processor<CtElement>> preprocessors = Collections.unmodifiableList(new ArrayList());
-            printer.setIgnoreImplicit(true);
-            printer.setPreprocessors(preprocessors);
-            return printer;
-        });
-
-        // Create a group of compilation units
-        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
-        System.out.println("PROJECT PATH:" + Paths.get(project.getProjectDir().toPath().toString(), "src", "main", "java"));
-
-        // todo - Add application variant support
-//        System.out.println(appExtension.getSourceSets().getByName("main").getRes());
-//        appExtension.getApplicationVariants().forEach((applicationVariant -> {
-//            System.out.println("Variant [" + applicationVariant.getName() + "]");
-//            applicationVariant.getOutputs().forEach(baseVariantOutput -> {
-//
-//            });
-//        }));
-
-        File outputDirectory = null;
-        if(launcherExtension.getSourceOutputDirectory() != null) {
-            outputDirectory = new File(launcherExtension.getSourceOutputDirectory());
-        }
-
-        if(outputDirectory != null && !outputDirectory.isDirectory()) {
-            throw new RuntimeException("No such directory " + launcherExtension.getSourceOutputDirectory());
-        }
-
-        if(outputDirectory != null) {
-            compilationUnitGroup.setSourceOutputDirectory(outputDirectory);
-        }
-
-        System.out.println("Extension" + launcherExtension);
-        if(launcherExtension != null) {
-            for (String file : launcherExtension.getFiles()) {
-                System.out.println("file" + file);
-                try {
-                    compilationUnitGroup.add(new File(file));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        try {
-            // Run the group of compilation units with the set of refactoring rules
-            compilationUnitGroup.run(refactoringRules);
-        } catch (Exception e) {
-            // Todo - Be more specific.
-            System.out.println("Something went wrong.");
-        }
+        return classPath;
     }
 }

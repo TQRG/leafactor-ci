@@ -39,8 +39,8 @@ public class CompilationUnitGroup {
         files = new ArrayList<>();
     }
 
-    public CompilationUnitGroup(Launcher laucher) {
-        this.launcher = laucher;
+    public CompilationUnitGroup(Launcher launcher) {
+        this.launcher = launcher;
         files = new ArrayList<>();
     }
 
@@ -152,6 +152,7 @@ public class CompilationUnitGroup {
             launcher.run();
             if (replaceOriginal) {
                 Map<File, String> packageNameMap = this.generatePackageNameMap();
+                System.out.println("Replacing original files.");
                 for(File file : files) {
                     String packageName = packageNameMap.get(file);
                     String fileName = file.getName();
@@ -163,7 +164,6 @@ public class CompilationUnitGroup {
                                     .replaceAll("\\s","") +
                             "/" + fileName;
                     System.out.println("Absolute path: " + tempFilePath);
-                    System.out.println("Replacing original files.");
                     if(!new File(tempFilePath).exists()) {
                         System.out.println("Warning, skipping file " + tempFilePath);
                     } else {

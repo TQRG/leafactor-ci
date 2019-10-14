@@ -1,10 +1,6 @@
 package com.leafactor.gradle.plugin;
 
-import java.util.ArrayList;
-
 public class LauncherExtension  {
-    private ArrayList<String> files;
-
     public String getSourceOutputDirectory() {
         return sourceOutputDirectory;
     }
@@ -14,12 +10,4 @@ public class LauncherExtension  {
     }
 
     private String sourceOutputDirectory;
-
-    public ArrayList<String> getFiles() {
-        return files;
-    }
-
-    public void setFiles(ArrayList<String> files) {
-        this.files = files;
-    }
 }
