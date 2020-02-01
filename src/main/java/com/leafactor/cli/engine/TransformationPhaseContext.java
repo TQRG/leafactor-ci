@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the context of an iteration detection phase
+ * Represents the context of an iteration transformation phase
  */
 public class TransformationPhaseContext {
     public CtBlock block;
@@ -21,7 +21,7 @@ public class TransformationPhaseContext {
     public Object extra;
 
     /**
-     * Accepts the case for the refactoring phase
+     * Accepts the case for the transformation phase
      */
     public void accept(CaseOfInterest caseOfInterest) {
         if(!transformedCaseOfInterestList.contains(caseOfInterest)) {

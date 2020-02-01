@@ -2,7 +2,7 @@ package com.leafactor.cli.rules.Cases;
 
 import com.leafactor.cli.engine.CaseOfInterest;
 import com.leafactor.cli.engine.DetectionPhaseContext;
-import spoon.reflect.code.*;
+import spoon.reflect.code.CtAssignment;
 
 public class VariableReassigned extends CaseOfInterest {
     final public CtAssignment assignment;

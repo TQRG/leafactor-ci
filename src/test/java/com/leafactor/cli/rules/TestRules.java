@@ -1,22 +1,18 @@
 package com.leafactor.cli.rules;
 
-import com.leafactor.cli.engine.logging.IterationLogger;
-import com.leafactor.cli.engine.RefactoringRule;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import spoon.Launcher;
 import spoon.compiler.Environment;
+import spoon.leafactor.engine.RefactoringRule;
+import spoon.leafactor.engine.logging.IterationLogger;
 import spoon.reflect.CtModel;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,13 +25,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TestRules {
-    private static final PrintStream out = System.out;
-    private static final PrintStream dummy = new PrintStream(new OutputStream() {@Override public void write(int b){} });
-
-    private static void togglePrints(boolean on) {
-        System.setOut(on?out:dummy);
-    }
-
     // https://github.com/gradle/gradle/issues/5975
     @TestFactory
     Collection<DynamicTest> dynamicTestsWithCollection() throws IOException, URISyntaxException {

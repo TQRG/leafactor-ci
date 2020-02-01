@@ -5,7 +5,6 @@ import org.gradle.api.Project;
 
 public class LeafactorCIPlugin implements Plugin<Project> {
     static final String TASK_NAME = "refactor";
-
     @Override
     public void apply(Project project) {
         LauncherExtension launcherExtension = project.getExtensions().create("launcherExtension", LauncherExtension.class);

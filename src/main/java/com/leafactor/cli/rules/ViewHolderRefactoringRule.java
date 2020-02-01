@@ -4,7 +4,6 @@ import com.leafactor.cli.engine.*;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.rules.Cases.VariableDeclared;
 import com.leafactor.cli.rules.ViewHolderCases.*;
-import org.eclipse.jdt.core.dom.IfStatement;
 import spoon.processing.AbstractProcessor;
 import spoon.reflect.code.*;
 import spoon.reflect.declaration.*;
@@ -30,7 +29,7 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
         Factory factory = null;
         boolean convertViewInflated = false; // If true the convertView is properly null checked and assigned the layout
         boolean hasViewHolderInstance = false; // If true at this point there is a viewHolderInstance
-        boolean isPopulatingViewHolder = false; // If true there is an condition for populating the viewHolder
+        boolean isPopulatingViewHolder = false; // If true there is a condition for populating the viewHolder
         boolean hasIfPreamble = false;
         boolean hasIfStmt = false;
         CtIf ifStmt = null;

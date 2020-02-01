@@ -1,9 +1,9 @@
 package com.leafactor.cli.engine;
 
+
 import spoon.processing.Processor;
 import spoon.reflect.code.CtBlock;
 import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtMethod;
 
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 /**
  * Refactoring rule interface
  */
-public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iteration, CaseDetector, CaseTransformer, CaseProcessor{
+public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iteration, CaseDetector, CaseTransformer, CaseProcessor {
 
     /**
      * Finds a element of interest

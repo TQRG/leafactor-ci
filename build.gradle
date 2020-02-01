@@ -10,17 +10,15 @@ plugins {
 }
 
 repositories {
-    maven { url 'http://maven.inria.fr/artifactory/spoon-public-snapshot' }
+    mavenCentral()
     google()
-    mavenLocal()
-    maven { url 'http://repo1.maven.org/maven2' }
     jcenter()
 }
 
 dependencies {
     implementation(gradleApi())
     implementation(localGroovy())
-    implementation 'fr.inria.gforge.spoon:spoon-core:7.6.0-SNAPSHOT'
+    implementation files('../spoon/target/spoon-core-8.1.0-SNAPSHOT-jar-with-dependencies.jar')
     implementation 'io.github.java-diff-utils:java-diff-utils:4.0'
     implementation 'info.picocli:picocli:3.9.5'
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.1"
@@ -29,6 +27,13 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.3.1"
     implementation 'com.android.tools.build:gradle:3.5.0'
     implementation group: 'net.lingala.zip4j', name: 'zip4j', version: '2.1.4'
+    implementation 'org.eclipse.aether:aether-api:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-util:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-impl:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-spi:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-transport-http:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-connector-basic:jar:1.1.0'
+    implementation 'org.eclipse.aether:aether-transport-file:jar:1.1.0'
 }
 
 sourceSets {
@@ -37,10 +42,6 @@ sourceSets {
     }
 }
 
-javadoc {
-    source = sourceSets.main.allJava
-    classpath = configurations.compile
-}
 
 jar {
     // Jar with all dependencies
