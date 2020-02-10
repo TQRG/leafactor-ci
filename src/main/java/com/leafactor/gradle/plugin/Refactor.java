@@ -6,21 +6,20 @@ import com.leafactor.cli.engine.*;
 import com.leafactor.cli.engine.logging.IterationLogEntry;
 import com.leafactor.cli.engine.logging.IterationLogger;
 import com.leafactor.cli.engine.logging.IterationPhaseLogEntry;
+import com.leafactor.cli.rules.DrawAllocationRefactoringRule;
 import com.leafactor.cli.rules.RecycleRefactoringRule;
+import com.leafactor.cli.rules.ViewHolderRefactoringRule;
+import com.leafactor.cli.rules.WakeLockRefactoringRule;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
 import spoon.compiler.Environment;
-import spoon.processing.ProcessorProperties;
-import spoon.processing.TraversalStrategy;
-import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtElement;
-import spoon.reflect.factory.Factory;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 
@@ -49,22 +48,7 @@ public class Refactor extends DefaultTask {
                 && (launcherExtension.isWhiteListVariants() || !launcherExtension.getVariants().contains(variantName));
     }
 
-    private void processApplicationVariant(ApplicationVariantManager applicationVariantManager) throws IOException {
-        // Creating the spoon launcher
-        Launcher launcher = new Launcher();
-        Environment environment = launcher.getEnvironment();
-        // Configure the environment to use a custom classPath
-        List<String> flavorDependencies = applicationVariantManager.getFlavorDependencies(project);
-//        environment.setSourceClasspath(DependenciesManager.dependenciesToClassPath(flavorDependencies));
-        environment.setNoClasspath(true);
-        environment.setAutoImports(true);
-        environment.setPrettyPrinterCreator(() -> {
-            SniperJavaPrettyPrinter sniperJavaPrettyPrinter = new SniperJavaPrettyPrinter(environment);
-            sniperJavaPrettyPrinter.setIgnoreImplicit(false);
-            return sniperJavaPrettyPrinter;
-        });
-        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
-
+    private void setupOutputDirectory(CompilationUnitGroup compilationUnitGroup, String leafFolderName) {
         // Optional output directory
         File outputDirectory = null;
         if (launcherExtension.getSourceOutputDirectory() != null) {
@@ -76,50 +60,71 @@ public class Refactor extends DefaultTask {
         }
 
         if (outputDirectory != null) {
-            File leafactorGenDir = new File(outputDirectory.getAbsolutePath() + "/leafactor-ci/" + applicationVariantManager.getVariantName());
+            File leafactorGenDir = new File(outputDirectory.getAbsolutePath() + "/leafactor-ci/" + leafFolderName);
             if (!leafactorGenDir.exists() && !leafactorGenDir.mkdirs()) {
                 throw new RuntimeException("Could not create directory " + leafactorGenDir.getAbsolutePath());
             }
             compilationUnitGroup.setSourceOutputDirectory(leafactorGenDir);
         }
+    }
 
-//        if (new File(applicationVariantManager.getAidlFilesDir()).exists()) {
-//            compilationUnitGroup.add(new File(applicationVariantManager.getAidlFilesDir()));
-//        }
-//        if (new File(applicationVariantManager.getRFilesDir()).exists()) {
-//            compilationUnitGroup.add(new File(applicationVariantManager.getRFilesDir()));
-//        }
-//        if (new File(applicationVariantManager.getBuildConfigFilesDir()).exists()) {
-//            compilationUnitGroup.add(new File(applicationVariantManager.getBuildConfigFilesDir()));
-//        }
+
+    // This will process the application variant with full classpath specification
+    private void processApplicationVariant(ApplicationVariantManager applicationVariantManager) throws IOException {
+        // Creating the spoon launcher
+        Launcher launcher = new Launcher();
+        Environment environment = launcher.getEnvironment();
+        // Configure the environment to use a custom classPath
+        List<String> flavorDependencies = applicationVariantManager.getFlavorDependencies(project);
+        environment.setSourceClasspath(DependenciesManager.dependenciesToClassPath(flavorDependencies));
+        environment.setAutoImports(true);
+        environment.setPrettyPrinterCreator(() -> {
+            SniperJavaPrettyPrinter sniperJavaPrettyPrinter = new SniperJavaPrettyPrinter(environment);
+            sniperJavaPrettyPrinter.setIgnoreImplicit(false);
+            return sniperJavaPrettyPrinter;
+        });
+
+        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
+        setupOutputDirectory(compilationUnitGroup, applicationVariantManager.getVariantName());
+
+        if (new File(applicationVariantManager.getAidlFilesDir()).exists()) {
+            compilationUnitGroup.add(new File(applicationVariantManager.getAidlFilesDir()));
+        }
+        if (new File(applicationVariantManager.getRFilesDir()).exists()) {
+            compilationUnitGroup.add(new File(applicationVariantManager.getRFilesDir()));
+        }
+        if (new File(applicationVariantManager.getBuildConfigFilesDir()).exists()) {
+            compilationUnitGroup.add(new File(applicationVariantManager.getBuildConfigFilesDir()));
+        }
+        if (new File(applicationVariantManager.getFlavorFilesDir()).exists()) {
+            compilationUnitGroup.add(new File(applicationVariantManager.getFlavorFilesDir()));
+        }
         if (new File(applicationVariantManager.getMainFilesDir()).exists()) {
             compilationUnitGroup.add(new File(applicationVariantManager.getMainFilesDir()));
         }
-//        if (new File(applicationVariantManager.getFlavorFilesDir()).exists()) {
-//            compilationUnitGroup.add(new File(applicationVariantManager.getFlavorFilesDir()));
-//        }
 
         // Run the group of compilation units with the set of refactoring rules
         IterationLogger logger = new IterationLogger();
         List<RefactoringRule> refactoringRules = new ArrayList<>();
         // Adding all the refactoring rules
         refactoringRules.add(new RecycleRefactoringRule(logger));
-//                refactoringRules.add(new ViewHolderRefactoringRule(logger));
-//                refactoringRules.add(new DrawAllocationRefactoringRule(logger));
-//                refactoringRules.add(new WakeLockRefactoringRule(logger));
+        refactoringRules.add(new ViewHolderRefactoringRule(logger));
+        refactoringRules.add(new DrawAllocationRefactoringRule(logger));
+        refactoringRules.add(new WakeLockRefactoringRule(logger));
+
         compilationUnitGroup.run(refactoringRules);
         for (IterationLogEntry entry : logger.getLogs()) {
-//                    System.out.println("Log entry:");
-//                    System.out.println("Timestamp: " + entry.getTimeStamp());
-//                    System.out.println("Name: " + entry.getName());
-//                    System.out.println("Description: " + entry.getDescription());
-//                    System.out.println("Refactoring rule: " + entry.getRule().getClass().getName());
+            System.out.println("Log entry:");
+            System.out.println("Timestamp: " + entry.getTimeStamp());
+            System.out.println("Name: " + entry.getName());
+            System.out.println("Description: " + entry.getDescription());
+            System.out.println("Refactoring rule: " + entry.getRule().getClass().getName());
             if (entry instanceof IterationPhaseLogEntry) {
                 IterationPhaseLogEntry iterationPhaseLogEntry = (IterationPhaseLogEntry) entry;
                 Duration duration = iterationPhaseLogEntry.getPhaseDuration();
-//                        System.out.println(iterationPhaseLogEntry.getStartPhaseTimestamp());
-//                        System.out.println(iterationPhaseLogEntry.getEndPhaseTimestamp());
-//                        System.out.println("Duration: " + duration.toNanos());
+                System.out.println(iterationPhaseLogEntry.getStartPhaseTimestamp());
+                System.out.println(iterationPhaseLogEntry.getEndPhaseTimestamp());
+                System.out.println("Duration: " + duration.toNanos());
             }
         }
     }
@@ -139,11 +144,62 @@ public class Refactor extends DefaultTask {
         }));
     }
 
+    private void processWithoutClassPath() throws IOException {
+        String projectPath = project.getProjectDir().toPath().toString();
+        String sourcePath = Paths.get(projectPath, "src", "main", "java").toString();
+
+        // Creating the spoon launcher
+        Launcher launcher = new Launcher();
+        Environment environment = launcher.getEnvironment();
+        environment.setNoClasspath(true);
+        environment.setAutoImports(true);
+        environment.setPrettyPrinterCreator(() -> {
+            SniperJavaPrettyPrinter sniperJavaPrettyPrinter = new SniperJavaPrettyPrinter(environment);
+            sniperJavaPrettyPrinter.setIgnoreImplicit(false);
+            return sniperJavaPrettyPrinter;
+        });
+
+        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
+        setupOutputDirectory(compilationUnitGroup, "main");
+        compilationUnitGroup.add(new File(sourcePath));
+
+        IterationLogger logger = new IterationLogger();
+        List<RefactoringRule> refactoringRules = new ArrayList<>();
+
+        // Adding all the refactoring rules
+        refactoringRules.add(new RecycleRefactoringRule(logger));
+        refactoringRules.add(new ViewHolderRefactoringRule(logger));
+        refactoringRules.add(new DrawAllocationRefactoringRule(logger));
+        refactoringRules.add(new WakeLockRefactoringRule(logger));
+
+        // Run the group of compilation units with the set of refactoring rules
+        compilationUnitGroup.run(refactoringRules);
+
+        for (IterationLogEntry entry : logger.getLogs()) {
+            System.out.println("Log entry:");
+            System.out.println("Timestamp: " + entry.getTimeStamp());
+            System.out.println("Name: " + entry.getName());
+            System.out.println("Description: " + entry.getDescription());
+            System.out.println("Refactoring rule: " + entry.getRule().getClass().getName());
+            if (entry instanceof IterationPhaseLogEntry) {
+                IterationPhaseLogEntry iterationPhaseLogEntry = (IterationPhaseLogEntry) entry;
+                Duration duration = iterationPhaseLogEntry.getPhaseDuration();
+                System.out.println(iterationPhaseLogEntry.getStartPhaseTimestamp());
+                System.out.println(iterationPhaseLogEntry.getEndPhaseTimestamp());
+                System.out.println("Duration: " + duration.toNanos());
+            }
+        }
+    }
 
     @TaskAction
     public void task() throws IOException {
         AppExtension appExtension = getAppExtension();
-        DependenciesManager dependenciesManager = new DependenciesManager(appExtension, project);
-        iterateOverApplicationVariants(appExtension, dependenciesManager);
+        if(launcherExtension.isUsingClasspath()) {
+            DependenciesManager dependenciesManager = new DependenciesManager(appExtension, project);
+            iterateOverApplicationVariants(appExtension, dependenciesManager);
+        } else {
+            processWithoutClassPath();
+        }
+
     }
 }
