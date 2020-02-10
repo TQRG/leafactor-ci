@@ -1,8 +1,5 @@
 package test.resources.com.leafactor.cli.rules.RecycleRefactoringRule.DifferentTypesShouldRecycleAll;
 
-
-
-
 public class Input {
     public void methodTypedArray(AttributeSet attrs , int defStyle) {
         final TypedArray a = getContext();

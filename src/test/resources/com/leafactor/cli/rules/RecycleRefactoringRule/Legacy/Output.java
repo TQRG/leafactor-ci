@@ -1,24 +1,20 @@
 package test.resources.com.leafactor.cli.rules.RecycleRefactoringRule.Legacy;
 
-
 import android.content.ContentProvider;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Message;
-import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
-
-
-
+import android.content.Context;
+import android.os.Parcel;
 
 public class Input {
     public void cursorError1(SQLiteDatabase db, long route_id) {

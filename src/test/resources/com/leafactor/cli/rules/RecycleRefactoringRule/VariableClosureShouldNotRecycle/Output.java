@@ -1,8 +1,5 @@
 package test.resources.com.leafactor.cli.rules.RecycleRefactoringRule.VariableClosureShouldNotRecycle;
 
-
-
-
 public class Input {
     public static interface DoSomething<F, T> {
         T convert(F from);

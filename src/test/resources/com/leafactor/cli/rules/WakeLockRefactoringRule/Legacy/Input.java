@@ -38,7 +38,7 @@ public class Input {
             super.onCreate(savedInstanceState);
 
             PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-            WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
+            WakeLock wl = pm.newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK | android.os.PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
             wl.acquire();
         }
 
@@ -73,7 +73,7 @@ public class Input {
             super.onCreate(savedInstanceState);
 
             PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-            WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
+            WakeLock wl = pm.newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK | android.os.PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
             wl.acquire();
         }
     }

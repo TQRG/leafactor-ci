@@ -1,10 +1,6 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldRefactorConvertView;
 
-
 import R.layout.your_layout;
-
-
-
 
 public abstract class Input extends BaseAdapter {
 
@@ -13,7 +9,7 @@ public abstract class Input extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            convertView = (convertView == null) ? mInflater.inflate(your_layout, null) : convertView;
+            convertView = (convertView == null) ? mInflater.inflate(R.layout.your_layout, null) : convertView;
             return convertView;
         }
     }

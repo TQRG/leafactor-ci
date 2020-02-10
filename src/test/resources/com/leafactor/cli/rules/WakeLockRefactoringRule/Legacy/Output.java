@@ -1,15 +1,10 @@
 package test.resources.com.leafactor.cli.rules.WakeLockRefactoringRule.Legacy;
 
-
-import Context.POWER_SERVICE;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-
-
-
 
 public class Input {
     public class C1 extends Activity {
@@ -36,7 +31,7 @@ public class Input {
             super.onDestroy();
         }
 
-        @Override
+        @java.lang.Override
         void onResume() {
             super.onResume();
             wl.acquire();
@@ -50,7 +45,7 @@ public class Input {
             super.onCreate(savedInstanceState);
 
             PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-            wl = pm.newWakeLock(((PowerManager.SCREEN_DIM_WAKE_LOCK) | (PowerManager.ON_AFTER_RELEASE)), "WakeLockSample");
+            wl = pm.newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK | android.os.PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
         }
 
         @Override
@@ -61,13 +56,13 @@ public class Input {
 
         private WakeLock wl = null;
 
-        @Override
+        @java.lang.Override
         void onPause() {
             super.onPause();
             wl.release();
         }
 
-        @Override
+        @java.lang.Override
         void onResume() {
             super.onResume();
             wl.acquire();
@@ -90,13 +85,13 @@ public class Input {
             wl.release();
         }
 
-        @Override
+        @java.lang.Override
         void onResume() {
             super.onResume();
             wl.acquire();
         }
 
-        @Override
+        @java.lang.Override
         void onDestroy() {
             super.onDestroy();
             wl.release();
@@ -110,24 +105,24 @@ public class Input {
             super.onCreate(savedInstanceState);
 
             PowerManager pm = (PowerManager)this.getSystemService(Context.POWER_SERVICE);
-            wl = pm.newWakeLock(((PowerManager.SCREEN_DIM_WAKE_LOCK) | (PowerManager.ON_AFTER_RELEASE)), "WakeLockSample");
+            wl = pm.newWakeLock(android.os.PowerManager.SCREEN_DIM_WAKE_LOCK | android.os.PowerManager.ON_AFTER_RELEASE, "WakeLockSample");
         }
 
         private WakeLock wl = null;
 
-        @Override
+        @java.lang.Override
         void onPause() {
             super.onPause();
             wl.release();
         }
 
-        @Override
+        @java.lang.Override
         void onResume() {
             super.onResume();
             wl.acquire();
         }
 
-        @Override
+        @java.lang.Override
         void onDestroy() {
             super.onDestroy();
             wl.release();

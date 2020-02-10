@@ -1,11 +1,5 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldUseViewHolder;
 
-
-import R.layout.your_layout;
-
-
-
-
 public abstract class Input extends BaseAdapter {
     public static class Adapter2 extends ViewHolderSample {
         LayoutInflater mInflater;

@@ -1,5 +1,9 @@
 package test.resources.com.leafactor.cli.rules.DrawAllocationRefactoringRule.Legacy;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -9,12 +13,6 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.Button;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-
-
 /** Some test data for the JavaPerformanceDetector */
 @SuppressWarnings("unused")
 public class Input extends Button {
@@ -91,7 +89,7 @@ public class Input extends Button {
 
     private Integer i = new Integer(5);
 
-    private Integer i3 = ((Integer) (new Integer(2)));
+    private Integer i3 = (Integer) new Integer(2);
 
     private Map<Integer, Object> myOtherMap = new HashMap<Integer, Object>();
 }

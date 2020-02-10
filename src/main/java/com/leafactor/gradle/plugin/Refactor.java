@@ -12,6 +12,11 @@ import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
 import spoon.Launcher;
 import spoon.compiler.Environment;
+import spoon.processing.ProcessorProperties;
+import spoon.processing.TraversalStrategy;
+import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtElement;
+import spoon.reflect.factory.Factory;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.File;
@@ -50,7 +55,8 @@ public class Refactor extends DefaultTask {
         Environment environment = launcher.getEnvironment();
         // Configure the environment to use a custom classPath
         List<String> flavorDependencies = applicationVariantManager.getFlavorDependencies(project);
-        environment.setSourceClasspath(DependenciesManager.dependenciesToClassPath(flavorDependencies));
+//        environment.setSourceClasspath(DependenciesManager.dependenciesToClassPath(flavorDependencies));
+        environment.setNoClasspath(true);
         environment.setAutoImports(true);
         environment.setPrettyPrinterCreator(() -> {
             SniperJavaPrettyPrinter sniperJavaPrettyPrinter = new SniperJavaPrettyPrinter(environment);
@@ -77,21 +83,21 @@ public class Refactor extends DefaultTask {
             compilationUnitGroup.setSourceOutputDirectory(leafactorGenDir);
         }
 
-        if (new File(applicationVariantManager.getAidlFilesDir()).exists()) {
-            compilationUnitGroup.add(new File(applicationVariantManager.getAidlFilesDir()));
-        }
-        if (new File(applicationVariantManager.getRFilesDir()).exists()) {
-            compilationUnitGroup.add(new File(applicationVariantManager.getRFilesDir()));
-        }
-        if (new File(applicationVariantManager.getBuildConfigFilesDir()).exists()) {
-            compilationUnitGroup.add(new File(applicationVariantManager.getBuildConfigFilesDir()));
-        }
+//        if (new File(applicationVariantManager.getAidlFilesDir()).exists()) {
+//            compilationUnitGroup.add(new File(applicationVariantManager.getAidlFilesDir()));
+//        }
+//        if (new File(applicationVariantManager.getRFilesDir()).exists()) {
+//            compilationUnitGroup.add(new File(applicationVariantManager.getRFilesDir()));
+//        }
+//        if (new File(applicationVariantManager.getBuildConfigFilesDir()).exists()) {
+//            compilationUnitGroup.add(new File(applicationVariantManager.getBuildConfigFilesDir()));
+//        }
         if (new File(applicationVariantManager.getMainFilesDir()).exists()) {
             compilationUnitGroup.add(new File(applicationVariantManager.getMainFilesDir()));
         }
-        if (new File(applicationVariantManager.getFlavorFilesDir()).exists()) {
-            compilationUnitGroup.add(new File(applicationVariantManager.getFlavorFilesDir()));
-        }
+//        if (new File(applicationVariantManager.getFlavorFilesDir()).exists()) {
+//            compilationUnitGroup.add(new File(applicationVariantManager.getFlavorFilesDir()));
+//        }
 
         // Run the group of compilation units with the set of refactoring rules
         IterationLogger logger = new IterationLogger();
@@ -101,7 +107,6 @@ public class Refactor extends DefaultTask {
 //                refactoringRules.add(new ViewHolderRefactoringRule(logger));
 //                refactoringRules.add(new DrawAllocationRefactoringRule(logger));
 //                refactoringRules.add(new WakeLockRefactoringRule(logger));
-
         compilationUnitGroup.run(refactoringRules);
         for (IterationLogEntry entry : logger.getLogs()) {
 //                    System.out.println("Log entry:");
@@ -123,7 +128,7 @@ public class Refactor extends DefaultTask {
         appExtension.getApplicationVariants().forEach((applicationVariant -> {
             try {
                 ApplicationVariantManager applicationVariantManager = new ApplicationVariantManager(appExtension, dependenciesManager, applicationVariant);
-                if (shouldProcessApplicationVariant(applicationVariantManager.getVariantName())) {
+                if (!shouldProcessApplicationVariant(applicationVariantManager.getVariantName())) {
                     return;
                 }
                 processApplicationVariant(applicationVariantManager);

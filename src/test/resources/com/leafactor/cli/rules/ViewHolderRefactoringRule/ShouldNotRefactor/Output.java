@@ -4,9 +4,6 @@ package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldN
 import R.id.text;
 import R.layout.your_layout;
 
-
-
-
 public abstract class Input extends BaseAdapter {
     public static class Adapter1 extends ViewHolderSample {
         @Override

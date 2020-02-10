@@ -194,7 +194,6 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
 
             // New variables for easier access
             Set<CtTypeReference<?>> ctTypeReferences = variableAssignedFindViewById.resource.getReferencedTypes();
-            String resource = ctTypeReferences.toArray()[ctTypeReferences.size() - 1].toString();
 
             if(!extra.hasViewHolderInstance) {
                 // Then we need to create it.
@@ -218,11 +217,12 @@ public class ViewHolderRefactoringRule  extends AbstractProcessor<CtClass> imple
 
             // TODO - we need to check if refactoringPhaseExtra.thenBlock already populates the viewHolder, we don't want duplicates
             if(true) {
+                System.out.println("variableAssignedFindViewById.resource - " + variableAssignedFindViewById.resource);
                 extra.thenBlock.addStatement(extra.factory.createCodeSnippetStatement(
                         String.format("%s.%s = (TextView) %s.findViewById(%s)",
                                 extra.viewHolderInstanceName,
                                 variableAssignedFindViewById.variable.getSimpleName(),
-                                extra.viewVariableName, resource)));
+                                extra.viewVariableName, variableAssignedFindViewById.resource.toString())));
             }
 
             // Replace the assignment of the variable with the ViewHolder field

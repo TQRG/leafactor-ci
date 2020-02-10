@@ -1,10 +1,6 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.ShouldNotRefactorConvertView;
 
-
 import R.layout.your_layout;
-
-
-
 
 public abstract class Input extends BaseAdapter {
     public static class Adapter1 extends ViewHolderSample {

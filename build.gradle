@@ -27,13 +27,15 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.3.1"
     implementation 'com.android.tools.build:gradle:3.5.0'
     implementation group: 'net.lingala.zip4j', name: 'zip4j', version: '2.1.4'
-    implementation 'org.eclipse.aether:aether-api:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-util:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-impl:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-spi:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-transport-http:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-connector-basic:jar:1.1.0'
-    implementation 'org.eclipse.aether:aether-transport-file:jar:1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-api', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-api', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-util', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-impl', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-spi', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-transport-http', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-connector-basic', version: '1.1.0'
+    implementation group: 'org.eclipse.aether', name: 'aether-transport-file', version: '1.1.0'
+    implementation group: 'org.apache.maven', name: 'maven-aether-provider', version: '3.3.9'
 }
 
 sourceSets {

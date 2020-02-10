@@ -1,8 +1,5 @@
 package test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy;
 
-
-
-
 public abstract class Input extends BaseAdapter {
     @Override
     public int getCount() {
@@ -40,7 +37,7 @@ public abstract class Input extends BaseAdapter {
             if (viewHolderItem == null) {
                 viewHolderItem = new ViewHolderItem();
                 convertView.setTag(viewHolderItem);
-                viewHolderItem.text = (TextView) convertView.findViewById(test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy.Input.R.id);
+                viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
             }
 
             TextView text = viewHolderItem.text;
@@ -59,12 +56,12 @@ public abstract class Input extends BaseAdapter {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View v = (convertView == null) ? mInflater.inflate(Input.R.layout.your_layout, null) : convertView;
+            View v = (convertView == null) ? mInflater.inflate(R.layout.your_layout, null) : convertView;
             ViewHolderItem viewHolderItem = (ViewHolderItem) v.getTag();
             if (viewHolderItem == null) {
                 viewHolderItem = new ViewHolderItem();
                 convertView.setTag(viewHolderItem);
-                viewHolderItem.text = (TextView) v.findViewById(test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy.Input.R.id);
+                viewHolderItem.text = (TextView) v.findViewById(R.id.text);
             }
 
             TextView text = viewHolderItem.text;
@@ -88,7 +85,7 @@ public abstract class Input extends BaseAdapter {
             if (viewHolderItem == null) {
                 viewHolderItem = new ViewHolderItem();
                 convertView.setTag(viewHolderItem);
-                viewHolderItem.text = (TextView) convertView.findViewById(test.resources.com.leafactor.cli.rules.ViewHolderRefactoringRule.Legacy.Input.R.id);
+                viewHolderItem.text = (TextView) convertView.findViewById(R.id.text);
             }
 
             TextView text = viewHolderItem.text;

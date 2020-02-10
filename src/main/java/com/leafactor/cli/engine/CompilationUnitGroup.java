@@ -3,6 +3,11 @@ package com.leafactor.cli.engine;
 
 import spoon.Launcher;
 import spoon.compiler.Environment;
+import spoon.processing.AbstractProcessor;
+import spoon.reflect.code.CtBlock;
+import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtElement;
+import spoon.reflect.declaration.CtType;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
 import java.io.*;
@@ -132,6 +137,15 @@ public class CompilationUnitGroup {
         for (RefactoringRule rule : refactoringRules) {
             launcher.addProcessor(rule);
         }
+
+        //FOR TESTING ONLY
+//        launcher.addProcessor(new AbstractProcessor<CtBlock>() {
+//            @Override
+//            public void process(CtBlock ctBlock) {
+//                System.out.println(">> " + ctBlock.toStringDebug() + " <<");
+//            }
+//        });
+        ///////////////////////
 
         for (File file : this.files) {
             launcher.addInputResource(file.getAbsolutePath());

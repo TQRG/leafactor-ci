@@ -1,11 +1,11 @@
 package com.leafactor.cli.rules;
 
+import com.leafactor.cli.engine.RefactoringRule;
+import com.leafactor.cli.engine.logging.IterationLogger;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import spoon.Launcher;
 import spoon.compiler.Environment;
-import spoon.leafactor.engine.RefactoringRule;
-import spoon.leafactor.engine.logging.IterationLogger;
 import spoon.reflect.CtModel;
 import spoon.support.sniper.SniperJavaPrettyPrinter;
 
