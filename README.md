@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/TQRG/leafactor-ci.svg?token=35rpGpzubsgs2UqfNV5N&branch=master)](https://travis-ci.com/TQRG/leafactor-ci)
 
+[![Maven metadata URL](https://img.shields.io/maven-metadata/v?label=Plugin&metadataUrl=https://plugins.gradle.org/m2/com/leafactorci/tqrg.leafactor.ci.gradle.plugin/maven-metadata.xml)](https://plugins.gradle.org/plugin/de.inetsoftware.jwebassembly)
+
 # Requirements
 
 Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HOME environment variable.
