@@ -10,7 +10,7 @@ Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HO
 
 To run tests use:
 ```
-gradlew :cleanTest :test --tests "com.leafactor.cli.rules.TestRules"
+gradlew :cleanTest :test --tests "tqrg.leafactor-ci.cli.rules.TestRules"
 ```
 
 Note: Tests in IntelliJ look unorganized because gradle currently has no support for dynamic test names, [see more.](https://github.com/gradle/gradle/issues/5975) 

@@ -6,7 +6,7 @@ plugins {
     id 'maven-publish'
     id 'groovy'
     id 'java-library'
-    id "com.gradle.plugin-publish" version "0.10.1"
+    id "com.gradle.plugin-publish" version "0.11.0"
 }
 
 repositories {
@@ -18,7 +18,8 @@ repositories {
 dependencies {
     implementation(gradleApi())
     implementation(localGroovy())
-    implementation files('../spoon/target/spoon-core-8.1.0-SNAPSHOT-jar-with-dependencies.jar')
+//    implementation files('../spoon/target/spoon-core-8.1.0-SNAPSHOT-jar-with-dependencies.jar')
+    implementation 'fr.inria.gforge.spoon:spoon-core:8.1.0'
     implementation 'io.github.java-diff-utils:java-diff-utils:4.0'
     implementation 'info.picocli:picocli:3.9.5'
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.1"
@@ -76,7 +77,7 @@ pluginBundle {
         leafactorCI {
             // id is captured from java-gradle-plugin configuration
             displayName = 'Leafactor CI'
-            id = 'com.leafactorci'
+            id = 'tqrg.leafactor.ci'
         }
     }
 }
