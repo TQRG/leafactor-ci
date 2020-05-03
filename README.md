@@ -66,7 +66,7 @@ Will be available soon.
 
 # Contributing
 
-LeafactorCI is base on [INRIA/spoon](https://github.com/INRIA/spoon). 
+LeafactorCI is powered by [INRIA/spoon](https://github.com/INRIA/spoon). 
 
 ## Requirements
 
