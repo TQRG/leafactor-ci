@@ -17,39 +17,6 @@ Currently LeafactorCI is in Alpha and can refactor the following patterns:
 These patterns were shown to affect battery efficiency, see more in
 [Performance-based Guidelines for Energy Efficient Mobile Applications](https://luiscruz.github.io/papers/cruz2017performance.pdf).
 
-
-# Requirements
-
-Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HOME environment variable.
-
-# Tests
-
-To run tests use:
-```
-gradlew :cleanTest :test --tests "tqrg.leafactor-ci.cli.rules.TestRules"
-```
-
-# Publishing
-The publishing version can be found in the gradle.properties file. A version can only be published once.
-To publish a version we must have a previously initialized login session to the gradle plugin registry, to sign in use:
-
-```
-gradlew login
-```
-
-After authorization is granted, we can proceed to the publishing of the version.
-
-```
-gradlew publishPlugins
-``` 
-
-Note:
-If the task fails due to javadoc problems, execute the following command and try again:
-```
-gradlew javadoc
-```
-
-
 # Installation 
 
 In your android project go to the app/build.gradle and add the following:
@@ -73,11 +40,6 @@ gradlew app:refactor
 Note: LeafactorCI is still in Alpha, there are still bugs to iron out.
 When refactoring your App with LeafactorCI make sure that you can revert its changes either by committing your files or changing your branch.
 
-## Options
-
-TODO
-
-
 ## Adding continuous integration
 
 To add continuous integration with a Leafactor CI stage where a commit is generated and sent to the git repository in a new branch, add the following code to your CI pipeline:
@@ -96,6 +58,58 @@ git remote rm origin
 git remote add origin "GIT_REPOSITORY_URL"
 git push origin "leafactor-refactoring-$REV"
 ```
+
+## Options
+
+TODO
+
+
+# Contributing
+
+LeafactorCI is base on [INRIA/spoon](https://github.com/INRIA/spoon). 
+
+## Requirements
+
+Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HOME environment variable.
+
+## Tests
+
+To run tests use:
+```
+gradlew :cleanTest :test --tests "tqrg.leafactor-ci.cli.rules.TestRules"
+```
+
+## Publishing
+The publishing version can be found in the gradle.properties file. A version can only be published once.
+To publish a version we must have a previously initialized login session to the gradle plugin registry, to sign in use:
+
+```
+gradlew login
+```
+
+After authorization is granted, we can proceed to the publishing of the version.
+
+```
+gradlew publishPlugins
+``` 
+
+Note:
+If the task fails due to javadoc problems, execute the following command and try again:
+```
+gradlew javadoc
+```
+
+## Known Bugs
+- LeafactorCI is importing the same package:
+    https://github.com/INRIA/spoon/issues/3267
+- Tests are not passing:
+    This is due to the Spoon issue https://github.com/INRIA/spoon/issues/3267
+- LeafactorCI recycling an unrecyclable variable: Needs to be addressed
+- LeafactorCI adding variables that already exist: Needs to be addressed
+- LeafactorCI adding fully qualified names: Needs to be addressed, is an issue with Spoon
+
+## Future
+- Add support for classpath integration (Partly done but not ready)
 
 # FAQ
 
