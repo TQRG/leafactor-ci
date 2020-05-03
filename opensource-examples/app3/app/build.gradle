@@ -16,7 +16,7 @@ plugins {
     id 'com.android.application'
 }
 
-apply plugin: com.leafactor.gradle.plugin.LeafactorCIPlugin
+apply plugin: tqrg.leafactor.ci.gradle.plugin.LeafactorCIPlugin
 
 android {
     compileSdkVersion 26

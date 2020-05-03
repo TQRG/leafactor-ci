@@ -6,7 +6,7 @@ buildscript {
 
 plugins {
     id 'com.android.application'
-    id "com.leafactorci" version "1.0.219"
+    id "tqrg.leafactor.ci" version "0.0.2"
 }
 
 android {
