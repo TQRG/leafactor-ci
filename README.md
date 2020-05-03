@@ -6,7 +6,7 @@
 
 LeafactorCI is a gradle plugin for refactoring battery inefficient anti-patterns in Android applications.
 It works by scanning the sources files of the Android project in order to find and refactor battery inefficient anti-patterns automatically. 
-LeafactorCI is able to integrate a CI pipeline, where the scan can be done automatically and changes can be automatically committed to your GIT repository.
+LeafactorCI is able to integrate a CI pipeline, by refactoring the source code and consequently committing the changes to your GIT repository.
 
 Currently LeafactorCI is in Alpha and can refactor the following patterns:
 - Recycle
