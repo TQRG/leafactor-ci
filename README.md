@@ -4,6 +4,20 @@
 [![Maven metadata URL](https://img.shields.io/maven-metadata/v?label=Plugin&metadataUrl=https://plugins.gradle.org/m2/tqrg/leafactor/ci/tqrg.leafactor.ci.gradle.plugin/maven-metadata.xml)](https://plugins.gradle.org/plugin/de.inetsoftware.jwebassembly)
 ![Maven metadata URL](https://img.shields.io/badge/Latest%20Release-Alpha-blue)
 
+LeafactorCI is a gradle plugin for refactoring battery inefficient anti-patterns in Android applications.
+It works by scanning the sources files of the Android project in order to find and refactor battery inefficient anti-patterns automatically. 
+LeafactorCI is able to integrate a CI pipeline, where the scan can be done automatically and changes can be automatically committed to your GIT repository.
+
+Currently LeafactorCI is in Alpha and can refactor the following patterns:
+- Recycle
+- ViewHolder 
+- DrawAllocation
+- WakeLock
+
+These patterns were shown to affect battery efficiency, see more in
+[Performance-based Guidelines for Energy Efficient Mobile Applications](https://luiscruz.github.io/papers/cruz2017performance.pdf).
+
+
 # Requirements
 
 Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HOME environment variable.
@@ -14,8 +28,6 @@ To run tests use:
 ```
 gradlew :cleanTest :test --tests "tqrg.leafactor-ci.cli.rules.TestRules"
 ```
-
-Note: Tests in IntelliJ look unorganized because gradle currently has no support for dynamic test names, [see more.](https://github.com/gradle/gradle/issues/5975) 
 
 # Publishing
 The publishing version can be found in the gradle.properties file. A version can only be published once.
@@ -40,9 +52,50 @@ gradlew javadoc
 
 # Installation 
 
+In your android project go to the app/build.gradle and add the following:
+```
+plugins {
+  id 'com.android.application'
+  id "tqrg.leafactor.ci" version "PLUGIN_VERSION"
+}
+```
+
+Where PLUGIN_VERSION is the version of the plugin you would like to use.
 Make sure that com.android.application plugin is applied first.
 
+# Usage
 
+Refactoring the app is very simples, simply run the following command.
+```
+gradlew app:refactor
+```
+
+Note: LeafactorCI is still in Alpha, there are still bugs to iron out.
+When refactoring your App with LeafactorCI make sure that you can revert its changes either by committing your files or changing your branch.
+
+## Options
+
+TODO
+
+
+## Adding continuous integration
+
+To add continuous integration with a Leafactor CI stage where a commit is generated and sent to the git repository in a new branch, add the following code to your CI pipeline:
+```bash
+git config user.email "EMAIL_OF_THE_COMMIT_AUTHOR"
+git config user.name "NAME_OF_THE_COMMIT_AUTHOR"
+REV=$(git rev-parse --short HEAD)
+git checkout -b "leafactor-refactoring-$REV"
+./gradlew build
+./gradlew refactor
+cd app/src
+git add .
+cd ../../
+git commit --allow-empty -m "LeafactorCI refactoring changes."
+git remote rm origin
+git remote add origin "GIT_REPOSITORY_URL"
+git push origin "leafactor-refactoring-$REV"
+```
 
 # FAQ
 
@@ -96,3 +149,12 @@ plugins {
 
 apply plugin: tqrg.leafactor.ci.gradle.plugin.LeafactorCIPlugin
 ``` 
+
+## LeafactorCI is importing the same package
+
+This is an ongoing issue in spoon, more information can be seen on:
+https://github.com/INRIA/spoon/issues/3267
+
+## I found a problem with LeafactorCI
+
+Please file a new issue. Resolve time will depend on LeafactorCI maintainer availability as well as INRIA/Spoon maintainer availability.
