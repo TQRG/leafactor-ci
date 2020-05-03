@@ -32,7 +32,7 @@ Make sure that com.android.application plugin is applied first.
 
 # Usage
 
-Refactoring the app is very simples, simply run the following command.
+Refactoring the app is very simple, just run the following command.
 ```
 gradlew app:refactor
 ```
