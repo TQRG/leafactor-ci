@@ -61,7 +61,7 @@ git push origin "leafactor-refactoring-$REV"
 
 ## Options
 
-TODO
+Will be available soon.
 
 
 # Contributing
