@@ -113,7 +113,7 @@ gradlew javadoc
 
 # FAQ
 
-## How to use jar instead of the published version:
+## How to use the jar instead of the published version:
 
 First clone the Spoon repository then go to the folder and generate a jar with dependencies:
 ```bash
