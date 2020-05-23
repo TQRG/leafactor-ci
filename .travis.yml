@@ -5,6 +5,7 @@ before_deploy:
 - ./gradlew build
 - mkdir -p $HOME/.gradle/
 - sed -i "s/version.*/version=$TRAVIS_TAG/g" gradle.properties
+- ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"
 deploy:
   - provider: releases
     skip_cleanup: true
