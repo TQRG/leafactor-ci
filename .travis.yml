@@ -1,9 +1,7 @@
 language: java
 jdk:
-- oraclejdk9
+- oraclejdk11
 before_deploy:
-- rm "${JAVA_HOME}/lib/security/cacerts"
-- ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"
 - ./gradlew build
 - mkdir -p $HOME/.gradle/
 - sed -i "s/version.*/version=$TRAVIS_TAG/g" gradle.properties
