@@ -10,9 +10,9 @@ plugins {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
     google()
-    jcenter()
 }
 
 dependencies {
