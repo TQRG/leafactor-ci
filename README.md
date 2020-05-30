@@ -172,3 +172,10 @@ https://github.com/INRIA/spoon/issues/3267
 ## I found a problem with LeafactorCI
 
 Please file a new issue. Resolve time will depend on LeafactorCI maintainer availability as well as INRIA/Spoon maintainer availability.
+
+
+## Acknowledgement
+
+This project would not be possible without the help of the INRIA/Spoon community in particular without
+the help of Martin Monperrus @monperrus who diligently supported INRIA/Spoon
+throughout the development of Leafactor CI.
