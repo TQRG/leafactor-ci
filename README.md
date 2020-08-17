@@ -76,7 +76,7 @@ Java 8 JDK - Make sure you have the Java 8 JDK and its referenced in the JAVA_HO
 
 To run tests use:
 ```
-gradlew :cleanTest :test --tests "tqrg.leafactor-ci.cli.rules.TestRules"
+gradlew :cleanTest :test --tests "tqrg.leafactor.ci.rules.TestRules"
 ```
 
 ## Publishing
