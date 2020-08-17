@@ -8,7 +8,6 @@ import spoon.reflect.reference.CtVariableReference;
 import tqrg.leafactor.ci.engine.CaseOfInterest;
 import tqrg.leafactor.ci.engine.DetectionPhaseContext;
 
-
 public class VariableAssignedGetTag extends CaseOfInterest {
     final public CtVariableReference variable; // The variable that is being assigned
 
@@ -21,14 +20,14 @@ public class VariableAssignedGetTag extends CaseOfInterest {
     public static VariableAssignedGetTag detect(DetectionPhaseContext context) {
         CtExpression assignmentExpression;
         CtVariableReference variableReference;
-        if(context.statement instanceof CtVariable) {
-            assignmentExpression = ((CtVariable)context.statement).getDefaultExpression();
-            variableReference = ((CtVariable)context.statement).getReference();
+        if (context.statement instanceof CtVariable) {
+            assignmentExpression = ((CtVariable) context.statement).getDefaultExpression();
+            variableReference = ((CtVariable) context.statement).getReference();
         } else if (context.statement instanceof CtAssignment) {
-            CtAssignment assignment = (CtAssignment)context.statement;
+            CtAssignment assignment = (CtAssignment) context.statement;
             assignmentExpression = assignment.getAssignment();
             CtExpression assignedExpression = assignment.getAssigned();
-            if(!(assignedExpression instanceof CtVariableWrite)) {
+            if (!(assignedExpression instanceof CtVariableWrite)) {
                 return null;
             }
             variableReference = ((CtVariableWrite) assignedExpression).getVariable();
@@ -37,7 +36,7 @@ public class VariableAssignedGetTag extends CaseOfInterest {
         }
 
         CtInvocation invocation;
-        if(assignmentExpression instanceof CtInvocation) {
+        if (assignmentExpression instanceof CtInvocation) {
             invocation = (CtInvocation) assignmentExpression;
         } else {
             return null;

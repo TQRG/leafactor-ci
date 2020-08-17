@@ -28,8 +28,8 @@ public class VariableUsed extends CaseOfInterest {
                 variableAccesses.add((CtVariableAccess) current);
             }
             stack.addAll(current.getDirectChildren());
-        } while(!stack.isEmpty());
-        if(variableAccesses.size() == 0) {
+        } while (!stack.isEmpty());
+        if (variableAccesses.size() == 0) {
             return null;
         }
         return new VariableUsed(variableAccesses, context);

@@ -1,6 +1,7 @@
 package tqrg.leafactor.ci.rules;
 
 import tqrg.leafactor.ci.engine.*;
+import tqrg.leafactor.ci.engine.Iterable;
 import tqrg.leafactor.ci.engine.logging.IterationLogger;
 import tqrg.leafactor.ci.rules.DrawAllocationCases.ObjectAllocation;
 import spoon.processing.AbstractProcessor;
@@ -30,7 +31,7 @@ public class DrawAllocationRefactoringRule extends AbstractProcessor<CtClass> im
         if (hasSameNumberOfArguments) {
             List parameterList = method.getParameters();
 
-            CtTypeReference firstArgumentType = ((CtParameter)parameterList.get(0)).getType();
+            CtTypeReference firstArgumentType = ((CtParameter) parameterList.get(0)).getType();
             boolean firstArgumentTypeMatches = firstArgumentType.getSimpleName().endsWith("Canvas");
 
             return nameMatch &&
@@ -56,30 +57,31 @@ public class DrawAllocationRefactoringRule extends AbstractProcessor<CtClass> im
     }
 
     @Override
-    public void processCase(RefactoringPhaseContext context) {
-        if(context.caseOfInterest instanceof ObjectAllocation) {
+    public void refactorCase(RefactoringPhaseContext context) {
+        if (context.caseOfInterest instanceof ObjectAllocation) {
             ObjectAllocation objectAllocation = (ObjectAllocation) context.caseOfInterest;
-            if(objectAllocation.getStatement() instanceof CtVariable) {
+            if (objectAllocation.getStatement() instanceof CtVariable) {
                 // We are declaring a variable, pull the declaration out of the scope.
                 CtClass ctClass = RefactoringRule.getClosestClassParent(context.block);
-                if(ctClass == null) {
+                if (ctClass == null) {
                     return;
                 }
-                // There is a viewHolder - Check if the field is inside, create it if necessary
+                // Check if the field is inside, create it if necessary
                 List<CtField<?>> fields = ctClass.getFields();
                 Optional<CtField<?>> optionalField = fields.stream().filter(field -> field.getSimpleName()
                         .equals(objectAllocation.variable.getSimpleName())).findFirst();
-                if(optionalField.isPresent() && !optionalField.get().getType().getSimpleName()
+                if (optionalField.isPresent() && !optionalField.get().getType().getSimpleName()
                         .equals(objectAllocation.variable.getType().getSimpleName())) {
                     // If types do not match we ignore for now.
                     return;
                 }
-                if(!optionalField.isPresent()) {
+                if (!optionalField.isPresent()) {
                     CtTypeReference typeReference = objectAllocation.variable.getType();
                     CtField field = ctClass.getFactory().createCtField(objectAllocation.variable.getSimpleName(), typeReference,
                             objectAllocation.constructorCall.toString(), ModifierKind.PRIVATE);
                     ctClass.addField(field);
-                    if(ObjectAllocation.isClearable(typeReference)) {
+
+                    if (ObjectAllocation.isClearable(typeReference)) {
                         objectAllocation.getStatement().insertBefore(
                                 ctClass.getFactory().createCodeSnippetStatement(
                                         objectAllocation.variable.getSimpleName() + ".clear()"));
@@ -96,7 +98,7 @@ public class DrawAllocationRefactoringRule extends AbstractProcessor<CtClass> im
         }
         List<CtBlock> blocks = RefactoringRule.getCtElementsOfInterest(method, CtBlock.class::isInstance, CtBlock.class);
         for (CtBlock block : blocks) {
-            Iteration.iterateBlock(this, logger, block,false, 0);
+            Iterable.iterateBlock(this, logger, block, false, 0);
         }
     }
 

@@ -118,9 +118,9 @@ public class DependenciesManager {
     }
 
     static ArtifactResult resolveArtifact(RepositorySystem repoSystem,
-                                                 RepositorySystemSession repoSession,
-                                                 List<RemoteRepository> remoteRepos,
-                                                 Artifact artifact)
+                                          RepositorySystemSession repoSession,
+                                          List<RemoteRepository> remoteRepos,
+                                          Artifact artifact)
             throws IllegalArgumentException, ArtifactResolutionException {
         ArtifactRequest request = new ArtifactRequest();
         request.setArtifact(artifact);

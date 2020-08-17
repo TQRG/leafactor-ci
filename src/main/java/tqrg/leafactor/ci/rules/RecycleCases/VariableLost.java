@@ -20,22 +20,22 @@ public class VariableLost extends CaseOfInterest {
     }
 
     private static boolean isInsideLambda(CtElement current, DetectionPhaseContext context) {
-        CtLambda result = RefactoringRule.getClosestTypeParent(current, CtLambda.class, Arrays.asList(new CtElement[] {context.block}));
+        CtLambda result = RefactoringRule.getClosestTypeParent(current, CtLambda.class, Arrays.asList(new CtElement[]{context.block}));
         return result != null;
     }
 
     private static boolean isInsideReturn(CtElement current, DetectionPhaseContext context) {
-        CtReturn result = RefactoringRule.getClosestTypeParent(current, CtReturn.class, Arrays.asList(new CtElement[] {context.block}));
+        CtReturn result = RefactoringRule.getClosestTypeParent(current, CtReturn.class, Arrays.asList(new CtElement[]{context.block}));
         return result != null && result.getReturnedExpression() == current;
     }
 
     private static boolean isInsideInvocation(CtElement current, DetectionPhaseContext context) {
-        CtInvocation result = RefactoringRule.getClosestTypeParent(current, CtInvocation.class, Arrays.asList(new CtElement[] {context.block}));
+        CtInvocation result = RefactoringRule.getClosestTypeParent(current, CtInvocation.class, Arrays.asList(new CtElement[]{context.block}));
         return result != null && result.getArguments().contains(current);
     }
 
     private static boolean isInsideBlock(CtElement current, DetectionPhaseContext context) {
-        CtBlock result = RefactoringRule.getClosestTypeParent(current, CtBlock.class, Arrays.asList(new CtElement[] {context.block}));
+        CtBlock result = RefactoringRule.getClosestTypeParent(current, CtBlock.class, Arrays.asList(new CtElement[]{context.block}));
         return result != null;
     }
 
@@ -50,12 +50,12 @@ public class VariableLost extends CaseOfInterest {
                         || isInsideReturn(current, context)
                         || isInsideInvocation(current, context);
 
-                if(current.getParent() instanceof CtLocalVariable
+                if (current.getParent() instanceof CtLocalVariable
                         && ((CtLocalVariable) current.getParent()).getDefaultExpression() == current) {
                     wasLost = true;
                 }
 
-                if(wasLost) {
+                if (wasLost) {
                     variableAccesses.add((CtVariableAccess) current);
                 }
             }
@@ -64,8 +64,8 @@ public class VariableLost extends CaseOfInterest {
                 variableAccesses.add((CtVariableAccess) current);
             }
             stack.addAll(current.getDirectChildren());
-        } while(!stack.isEmpty());
-        if(variableAccesses.size() == 0) {
+        } while (!stack.isEmpty());
+        if (variableAccesses.size() == 0) {
             return null;
         }
         return new VariableLost(variableAccesses, context);

@@ -9,7 +9,7 @@ public interface CaseProcessor {
      *
      * @param context The iteration context of the current iteration in progress
      */
-    void processCase(RefactoringPhaseContext context);
+    void refactorCase(RefactoringPhaseContext context);
 
     /**
      * Compiles a list of case detectors into a single case detector
@@ -20,7 +20,7 @@ public interface CaseProcessor {
     static CaseProcessor combineCaseProcessor(CaseProcessor... caseProcessors) {
         return context -> {
             for (CaseProcessor caseProcessor : caseProcessors) {
-                caseProcessor.processCase(context);
+                caseProcessor.refactorCase(context);
             }
         };
     }

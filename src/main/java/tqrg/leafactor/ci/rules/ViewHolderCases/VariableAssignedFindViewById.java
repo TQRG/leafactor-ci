@@ -17,6 +17,7 @@ import java.util.List;
 public class VariableAssignedFindViewById extends CaseOfInterest {
     final public CtVariableReference variable; // The variable that is being assigned
     final public CtExpression resource;
+
     private VariableAssignedFindViewById(CtVariableReference variable,
                                          CtExpression resource,
                                          DetectionPhaseContext context) {
@@ -28,14 +29,14 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
     public static VariableAssignedFindViewById detect(DetectionPhaseContext context) {
         CtExpression assignmentExpression;
         CtVariableReference variableReference;
-        if(context.statement instanceof CtVariable) {
-            assignmentExpression = ((CtVariable)context.statement).getDefaultExpression();
-            variableReference = ((CtVariable)context.statement).getReference();
+        if (context.statement instanceof CtVariable) {
+            assignmentExpression = ((CtVariable) context.statement).getDefaultExpression();
+            variableReference = ((CtVariable) context.statement).getReference();
         } else if (context.statement instanceof CtAssignment) {
-            CtAssignment assignment = (CtAssignment)context.statement;
+            CtAssignment assignment = (CtAssignment) context.statement;
             assignmentExpression = assignment.getAssignment();
             CtExpression assignedExpression = assignment.getAssigned();
-            if(!(assignedExpression instanceof CtVariableWrite)) {
+            if (!(assignedExpression instanceof CtVariableWrite)) {
                 return null;
             }
             variableReference = ((CtVariableWrite) assignedExpression).getVariable();
@@ -44,7 +45,7 @@ public class VariableAssignedFindViewById extends CaseOfInterest {
         }
 
         CtInvocation invocation;
-        if(assignmentExpression instanceof CtInvocation) {
+        if (assignmentExpression instanceof CtInvocation) {
             invocation = (CtInvocation) assignmentExpression;
         } else {
             return null;

@@ -1,9 +1,8 @@
 package tqrg.leafactor.ci.rules;
 
-import tqrg.leafactor.ci.engine.*;
 import tqrg.leafactor.ci.engine.CaseTransformer;
 import tqrg.leafactor.ci.engine.DetectionPhaseContext;
-import tqrg.leafactor.ci.engine.Iteration;
+import tqrg.leafactor.ci.engine.Iterable;
 import tqrg.leafactor.ci.engine.RefactoringPhaseContext;
 import tqrg.leafactor.ci.engine.RefactoringRule;
 import tqrg.leafactor.ci.engine.TransformationPhaseContext;
@@ -38,7 +37,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
         if (hasSameNumberOfArguments) {
             List parameterList = method.getParameters();
 
-            CtTypeReference firstArgumentType = ((CtParameter)parameterList.get(0)).getType();
+            CtTypeReference firstArgumentType = ((CtParameter) parameterList.get(0)).getType();
             boolean firstArgumentTypeMatches = firstArgumentType.getSimpleName().endsWith("Bundle");
 
             return nameMatch &&
@@ -68,30 +67,29 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
     }
 
     @Override
-    public void processCase(RefactoringPhaseContext context) {
-        if(context.caseOfInterest instanceof WakeLockAcquired) {
+    public void refactorCase(RefactoringPhaseContext context) {
+        if (context.caseOfInterest instanceof WakeLockAcquired) {
             WakeLockAcquired wakeLockAcquired = (WakeLockAcquired) context.caseOfInterest;
             Optional<VariableDeclared> optionalVariableDeclared = context.casesOfInterest.stream()
                     .filter(VariableDeclared.class::isInstance)
                     .map(VariableDeclared.class::cast)
                     .filter(variableDeclared -> variableDeclared.variable.getSimpleName()
                             .equals(wakeLockAcquired.variable.getVariable().getSimpleName())).findFirst();
-            if(optionalVariableDeclared.isPresent()) {
+            if (optionalVariableDeclared.isPresent()) {
 
                 CtClass ctClass = RefactoringRule.getClosestClassParent(context.block);
-                if(ctClass == null) {
+                if (ctClass == null) {
                     return;
                 }
-                // There is a viewHolder - Check if the field is inside, create it if necessary
                 List<CtField<?>> fields = ctClass.getFields();
                 Optional<CtField<?>> optionalField = fields.stream().filter(field -> field.getSimpleName()
                         .equals(optionalVariableDeclared.get().variable.getSimpleName())).findFirst();
-                if(optionalField.isPresent() && !optionalField.get().getType().getSimpleName()
+                if (optionalField.isPresent() && !optionalField.get().getType().getSimpleName()
                         .equals(optionalVariableDeclared.get().variable.getType().getSimpleName())) {
                     // If types do not match we ignore for now.
                     return;
                 }
-                if(!optionalField.isPresent()) {
+                if (!optionalField.isPresent()) {
                     CtTypeReference typeReference = optionalVariableDeclared.get().variable.getType();
                     CtField field = ctClass.getFactory().createCtField(optionalVariableDeclared.get().variable.getSimpleName(), typeReference,
                             "null", ModifierKind.PRIVATE);
@@ -111,7 +109,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
             // From here on we assume the variable is in the class as a field
 
             CtClass ctClass = RefactoringRule.getClosestClassParent(context.block);
-            if(ctClass == null) {
+            if (ctClass == null) {
                 return;
             }
 
@@ -122,16 +120,16 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
             String variableName = wakeLockAcquired.variable.getVariable().getSimpleName();
             for (CtMethod<?> ctMethod : methods) {
 
-                if(ctMethod.getParameters().size() != 0 || !ctMethod.getType().getSimpleName().equals("void")) {
+                if (ctMethod.getParameters().size() != 0 || !ctMethod.getType().getSimpleName().equals("void")) {
                     continue;
                 }
 
-                switch(ctMethod.getSimpleName()) {
+                switch (ctMethod.getSimpleName()) {
                     case "onPause":
                         hasOnPause = true;
                         boolean hasRelease = false;
-                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
-                            if(statement instanceof CtInvocation) {
+                        for (CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if (statement instanceof CtInvocation) {
                                 CtInvocation invocation = (CtInvocation) statement;
                                 CtExpression target = invocation.getTarget();
                                 if (target.toString().equals(variableName) &&
@@ -141,7 +139,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                                 }
                             }
                         }
-                        if(!hasRelease) {
+                        if (!hasRelease) {
                             ctMethod.getBody().addStatement(ctMethod.getFactory()
                                     .createCodeSnippetStatement(variableName + ".release()"));
                         }
@@ -151,8 +149,8 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                         hasOnResume = true;
 
                         boolean hasAcquire = false;
-                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
-                            if(statement instanceof CtInvocation) {
+                        for (CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if (statement instanceof CtInvocation) {
                                 CtInvocation invocation = (CtInvocation) statement;
                                 CtExpression target = invocation.getTarget();
                                 if (target.toString().equals(variableName) &&
@@ -162,7 +160,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                                 }
                             }
                         }
-                        if(!hasAcquire) {
+                        if (!hasAcquire) {
                             ctMethod.getBody().addStatement(ctMethod.getFactory()
                                     .createCodeSnippetStatement(variableName + ".acquire()"));
                         }
@@ -173,8 +171,8 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                         hasOnDestroy = true;
 
                         boolean hasDestroy = false;
-                        for(CtStatement statement : ctMethod.getBody().getStatements()) {
-                            if(statement instanceof CtInvocation) {
+                        for (CtStatement statement : ctMethod.getBody().getStatements()) {
+                            if (statement instanceof CtInvocation) {
                                 CtInvocation invocation = (CtInvocation) statement;
                                 CtExpression target = invocation.getTarget();
                                 if (target.toString().equals(variableName) &&
@@ -184,7 +182,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                                 }
                             }
                         }
-                        if(!hasDestroy) {
+                        if (!hasDestroy) {
                             ctMethod.getBody().addStatement(ctMethod.getFactory()
                                     .createCodeSnippetStatement(variableName + ".release()"));
                         }
@@ -195,7 +193,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
 
             Factory factory = ctClass.getFactory();
 
-            if(!hasOnPause) {
+            if (!hasOnPause) {
                 CtMethod method = factory.createMethod();
                 method.setType(factory.Type().voidPrimitiveType());
                 method.setSimpleName("onPause");
@@ -208,7 +206,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                 ctClass.addMethod(method);
             }
 
-            if(!hasOnResume) {
+            if (!hasOnResume) {
                 CtMethod method = factory.createMethod();
                 method.setType(factory.Type().voidPrimitiveType());
                 method.setSimpleName("onResume");
@@ -221,7 +219,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
                 ctClass.addMethod(method);
             }
 
-            if(!hasOnDestroy) {
+            if (!hasOnDestroy) {
                 CtMethod method = factory.createMethod();
                 method.setType(factory.Type().voidPrimitiveType());
                 CtAnnotation<Annotation> annotation = factory.Code()
@@ -242,7 +240,7 @@ public class WakeLockRefactoringRule extends AbstractProcessor<CtClass> implemen
         }
         List<CtBlock> blocks = RefactoringRule.getCtElementsOfInterest(method, CtBlock.class::isInstance, CtBlock.class);
         for (CtBlock block : blocks) {
-            Iteration.iterateBlock(this, logger, block,false, 0);
+            Iterable.iterateBlock(this, logger, block, false, 0);
         }
     }
 

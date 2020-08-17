@@ -135,12 +135,12 @@ public class CompilationUnitGroup {
         }
 
         //FOR TESTING ONLY
-        launcher.addProcessor(new AbstractProcessor<CtBlock>() {
-            @Override
-            public void process(CtBlock ctBlock) {
-                System.out.println(">> " + ctBlock.toStringDebug() + " <<");
-            }
-        });
+//        launcher.addProcessor(new AbstractProcessor<CtBlock>() {
+//            @Override
+//            public void process(CtBlock ctBlock) {
+//                System.out.println(">> " + ctBlock.toStringDebug() + " <<");
+//            }
+//        });
         ///////////////////////
 
         for (File file : this.files) {

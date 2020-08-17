@@ -148,18 +148,7 @@ public class Refactor extends DefaultTask {
         String projectPath = project.getProjectDir().toPath().toString();
         String sourcePath = Paths.get(projectPath, "src", "main", "java").toString();
 
-        // Creating the spoon launcher
-        Launcher launcher = new Launcher();
-        Environment environment = launcher.getEnvironment();
-        environment.setNoClasspath(true);
-        environment.setAutoImports(true);
-        environment.setPrettyPrinterCreator(() -> {
-            SniperJavaPrettyPrinter sniperJavaPrettyPrinter = new SniperJavaPrettyPrinter(environment);
-            sniperJavaPrettyPrinter.setIgnoreImplicit(false);
-            return sniperJavaPrettyPrinter;
-        });
-
-        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(launcher);
+        CompilationUnitGroup compilationUnitGroup = new CompilationUnitGroup(null);
         setupOutputDirectory(compilationUnitGroup, "main");
         compilationUnitGroup.add(new File(sourcePath));
 
@@ -195,7 +184,7 @@ public class Refactor extends DefaultTask {
     @TaskAction
     public void task() throws IOException {
         AppExtension appExtension = getAppExtension();
-        if(launcherExtension.isUsingClasspath()) {
+        if (launcherExtension.isUsingClasspath()) {
             DependenciesManager dependenciesManager = new DependenciesManager(appExtension, project);
             iterateOverApplicationVariants(appExtension, dependenciesManager);
         } else {

@@ -3,7 +3,7 @@ package tqrg.leafactor.ci.gradle.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LauncherExtension  {
+public class LauncherExtension {
     private boolean useClasspath = false;
     private boolean whiteListVariants = false;
     private List<String> variants = new ArrayList<>();

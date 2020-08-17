@@ -1,10 +1,9 @@
 package tqrg.leafactor.ci.rules;
 
-import tqrg.leafactor.ci.engine.*;
 import tqrg.leafactor.ci.engine.CaseOfInterest;
 import tqrg.leafactor.ci.engine.CaseTransformer;
 import tqrg.leafactor.ci.engine.DetectionPhaseContext;
-import tqrg.leafactor.ci.engine.Iteration;
+import tqrg.leafactor.ci.engine.Iterable;
 import tqrg.leafactor.ci.engine.RefactoringPhaseContext;
 import tqrg.leafactor.ci.engine.RefactoringRule;
 import tqrg.leafactor.ci.engine.TransformationPhaseContext;
@@ -80,9 +79,9 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     @Override
     public void transformCase(TransformationPhaseContext context) {
         List<VariableDeclared> variables = context.caseOfInterestList.stream()
-            .filter(VariableDeclared.class::isInstance)
-            .map(VariableDeclared.class::cast).collect(Collectors.toList());
-        if(context.caseOfInterest instanceof VariableUsed) {
+                .filter(VariableDeclared.class::isInstance)
+                .map(VariableDeclared.class::cast).collect(Collectors.toList());
+        if (context.caseOfInterest instanceof VariableUsed) {
             // Filtering considering the variables declared
             VariableUsed variableUsed = (VariableUsed) context.caseOfInterest;
             boolean interesting = variables.stream().anyMatch(variableDeclared -> variableUsed.variableAccesses.stream()
@@ -91,13 +90,13 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
             if (interesting) {
                 context.accept(context.caseOfInterest);
             }
-        } else if(context.caseOfInterest instanceof VariableReassigned) {
+        } else if (context.caseOfInterest instanceof VariableReassigned) {
             // Filtering considering the variables declared
             VariableReassigned variableReassigned = (VariableReassigned) context.caseOfInterest;
             boolean interesting = variables.stream().anyMatch(variableDeclared -> {
                 CtExpression assigned = variableReassigned.assignment.getAssigned();
                 return (assigned instanceof CtVariableWrite &&
-                        ((CtVariableWrite)assigned).getVariable().getSimpleName()
+                        ((CtVariableWrite) assigned).getVariable().getSimpleName()
                                 .equals(variableDeclared.variable.getSimpleName()));
             });
             if (interesting) {
@@ -110,22 +109,22 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
 
     private List<CaseOfInterest> getCasesByVariableName(String variableName, List<CaseOfInterest> caseOfInterests) {
         return caseOfInterests.stream().filter(caseOfInterest -> {
-            if(caseOfInterest instanceof VariableDeclared) {
+            if (caseOfInterest instanceof VariableDeclared) {
                 return ((VariableDeclared) caseOfInterest).variable.getSimpleName().equals(variableName);
-            } else if(caseOfInterest instanceof VariableReassigned) {
+            } else if (caseOfInterest instanceof VariableReassigned) {
                 CtExpression assigned = ((VariableReassigned) caseOfInterest).assignment.getAssigned();
-                if(assigned instanceof CtVariableWrite) {
+                if (assigned instanceof CtVariableWrite) {
                     return ((CtVariableWrite) assigned).getVariable().getSimpleName().equals(variableName);
                 }
-            } else if(caseOfInterest instanceof VariableUsed) {
+            } else if (caseOfInterest instanceof VariableUsed) {
                 return ((VariableUsed) caseOfInterest).variableAccesses.stream()
                         .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
                                 .equals(variableName));
-            } else if(caseOfInterest instanceof VariableLost) {
+            } else if (caseOfInterest instanceof VariableLost) {
                 return ((VariableLost) caseOfInterest).variableAccesses.stream()
                         .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
                                 .equals(variableName));
-            } else if(caseOfInterest instanceof VariableRecycled) {
+            } else if (caseOfInterest instanceof VariableRecycled) {
                 return ((VariableRecycled) caseOfInterest).variableAccesses.stream()
                         .anyMatch(ctVariableAccess -> ctVariableAccess.getVariable().getSimpleName()
                                 .equals(variableName));
@@ -139,7 +138,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
                 .map(VariableDeclared.class::cast)
                 .filter(variableDeclared -> variableDeclared.variable.getSimpleName().equals(variableName))
                 .findFirst();
-        if(!match.isPresent()) {
+        if (!match.isPresent()) {
             return null;
         }
         return match.get().variable.getType().getSimpleName();
@@ -159,17 +158,17 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     private boolean wasVariableRecycled(String variableName, RefactoringPhaseContext context) {
         List<CaseOfInterest> filtered = getCasesByVariableName(variableName, context.casesOfInterest);
         int index = filtered.indexOf(context.caseOfInterest);
-        if(context.caseOfInterest instanceof VariableReassigned) {
+        if (context.caseOfInterest instanceof VariableReassigned) {
             // We do not want to consider this case of interest
-            index --;
+            index--;
         }
         filtered = filtered.subList(0, index);
-        for(int i = filtered.size() - 1; i >= 0; i --) {
+        for (int i = filtered.size() - 1; i >= 0; i--) {
             CaseOfInterest current = filtered.get(i);
             // NOTE: Only check up to this point in the phase and after the last declaration or redeclaration of this variable
-            if(current instanceof VariableReassigned || current instanceof VariableDeclared) {
+            if (current instanceof VariableReassigned || current instanceof VariableDeclared) {
                 break;
-            } else if(current instanceof VariableRecycled) {
+            } else if (current instanceof VariableRecycled) {
                 return true;
             }
         }
@@ -177,18 +176,18 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private void recycleVariableDeclared(RefactoringPhaseContext context) {
-        if(!(context.caseOfInterest instanceof VariableDeclared)) {
+        if (!(context.caseOfInterest instanceof VariableDeclared)) {
             return;
         }
         VariableDeclared variableDeclared = (VariableDeclared) context.caseOfInterest;
         String variableName = variableDeclared.variable.getSimpleName();
         String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
-        if(typeName == null) {
+        if (typeName == null) {
             return;
         }
         List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest); // TODO - EXCLUDE RETURN STATEMENTS
         boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
-        if(!isLast) {
+        if (!isLast) {
             return;
         }
         Factory factory = context.caseOfInterest.getStatement().getFactory();
@@ -203,25 +202,25 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private void recycleVariableReassigned(RefactoringPhaseContext context) {
-        if(!(context.caseOfInterest instanceof VariableReassigned)) {
+        if (!(context.caseOfInterest instanceof VariableReassigned)) {
             return;
         }
         // We consider reassigns because there could be no usage in between Declarations and Reassignments
         CtExpression assigned = ((VariableReassigned) context.caseOfInterest).assignment.getAssigned();
-        if(assigned instanceof CtVariableWrite) {
+        if (assigned instanceof CtVariableWrite) {
             String variableName = ((CtVariableWrite) assigned).getVariable().getSimpleName();
             String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
-            if(typeName == null) {
+            if (typeName == null) {
                 return;
             }
 
             boolean wasVariableRecycled = wasVariableRecycled(variableName, context);
-            if(wasVariableRecycled) {
+            if (wasVariableRecycled) {
                 return;
             }
 
             boolean isInControl = isVariableUnderControl(variableName, context);
-            if(!isInControl) {
+            if (!isInControl) {
                 return;
             }
 
@@ -238,7 +237,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
 
             List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest);
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
-            if(!isLast) {
+            if (!isLast) {
                 return;
             }
 
@@ -256,7 +255,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     private void recycleVariableUsed(RefactoringPhaseContext context) {
-        if(!(context.caseOfInterest instanceof VariableUsed)) {
+        if (!(context.caseOfInterest instanceof VariableUsed)) {
             return;
         }
         List<CtVariableAccess> variableAccesses = ((VariableUsed) context.caseOfInterest).variableAccesses;
@@ -264,26 +263,26 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
         variableAccesses.forEach(ctVariableAccess -> {
             String variableName = ctVariableAccess.getVariable().getSimpleName();
 
-            if(alreadyRecycles.contains(variableName)) {
+            if (alreadyRecycles.contains(variableName)) {
                 return;
             }
 
             String typeName = opportunities.get(getTypeByVariableName(variableName, context.casesOfInterest));
-            if(typeName == null) {
+            if (typeName == null) {
                 return;
             }
             List<CaseOfInterest> casesOfInterest = getCasesByVariableName(variableName, context.casesOfInterest);
             boolean isLast = casesOfInterest.get(casesOfInterest.size() - 1).equals(context.caseOfInterest);
-            if(!isLast) {
+            if (!isLast) {
                 return;
             }
             boolean wasVariableRecycled = wasVariableRecycled(variableName, context);
-            if(wasVariableRecycled) {
+            if (wasVariableRecycled) {
                 return;
             }
 
             boolean isInControl = isVariableUnderControl(variableName, context);
-            if(!isInControl) {
+            if (!isInControl) {
                 return;
             }
 
@@ -301,7 +300,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     }
 
     @Override
-    public void processCase(RefactoringPhaseContext context) {
+    public void refactorCase(RefactoringPhaseContext context) {
 //        System.out.println("BEFORE: " + context.block.toStringDebug());
         recycleVariableDeclared(context);
         recycleVariableReassigned(context);
@@ -312,7 +311,7 @@ public class RecycleRefactoringRule extends AbstractProcessor<CtClass> implement
     private void refactor(CtMethod method) {
         List<CtBlock> blocks = RefactoringRule.getCtElementsOfInterest(method, CtBlock.class::isInstance, CtBlock.class);
         for (CtBlock block : blocks) {
-            Iteration.iterateBlock(this, logger, block,false, 0);
+            Iterable.iterateBlock(this, logger, block, false, 0);
         }
     }
 

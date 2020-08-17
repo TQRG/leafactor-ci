@@ -173,7 +173,6 @@ https://github.com/INRIA/spoon/issues/3267
 
 Please file a new issue. Resolve time will depend on LeafactorCI maintainer availability as well as INRIA/Spoon maintainer availability.
 
-
 ## Acknowledgement
 
 This project would not be possible without the help of the INRIA/Spoon community in particular without

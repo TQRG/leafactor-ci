@@ -28,11 +28,11 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
         if (!(context.statement instanceof CtAssignment)) {
             return null;
         }
-        CtAssignment assignment = (CtAssignment)context.statement;
+        CtAssignment assignment = (CtAssignment) context.statement;
         CtExpression assignedExpression = assignment.getAssigned();
         CtExpression assignmentExpression = assignment.getAssignment();
 
-        if(!(assignmentExpression instanceof CtConditional)) {
+        if (!(assignmentExpression instanceof CtConditional)) {
             return null;
         }
 
@@ -44,20 +44,20 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
 //        String argumentName = ((CtParameter) Objects.requireNonNull(RefactoringRule.getClosestMethodParent(context.statement))
 //                .getParameters().get(1)).getSimpleName();
 
-        if(!(condition instanceof CtBinaryOperator)) {
+        if (!(condition instanceof CtBinaryOperator)) {
             return null;
         }
 
-        CtBinaryOperator binaryOperator = (CtBinaryOperator)condition;
+        CtBinaryOperator binaryOperator = (CtBinaryOperator) condition;
         BinaryOperatorKind kind = binaryOperator.getKind();
         CtExpression leftHandOperand = binaryOperator.getLeftHandOperand();
         CtExpression rightHandOperand = binaryOperator.getRightHandOperand();
 
         CtVariableRead conditionVariableRead;
-        if(leftHandOperand instanceof CtVariableRead && rightHandOperand instanceof CtLiteral
+        if (leftHandOperand instanceof CtVariableRead && rightHandOperand instanceof CtLiteral
                 && rightHandOperand.toString().equals("null")) {
             conditionVariableRead = (CtVariableRead) leftHandOperand;
-        } else if(rightHandOperand instanceof CtVariableRead && leftHandOperand instanceof CtLiteral
+        } else if (rightHandOperand instanceof CtVariableRead && leftHandOperand instanceof CtLiteral
                 && leftHandOperand.toString().equals("null")) {
             conditionVariableRead = (CtVariableRead) rightHandOperand;
         } else {
@@ -66,10 +66,10 @@ public class ConvertViewReuseWithTernary extends CaseOfInterest {
 
         CtInvocation invocation;
         CtVariableRead variableRead;
-        if(thenExpression instanceof CtInvocation && elseExpression instanceof CtVariableRead && kind == BinaryOperatorKind.EQ) {
+        if (thenExpression instanceof CtInvocation && elseExpression instanceof CtVariableRead && kind == BinaryOperatorKind.EQ) {
             invocation = (CtInvocation) thenExpression;
             variableRead = (CtVariableRead) elseExpression;
-        } else if(elseExpression instanceof CtInvocation && thenExpression instanceof CtVariableRead && kind == BinaryOperatorKind.NE) {
+        } else if (elseExpression instanceof CtInvocation && thenExpression instanceof CtVariableRead && kind == BinaryOperatorKind.NE) {
             invocation = (CtInvocation) elseExpression;
             variableRead = (CtVariableRead) thenExpression;
         } else {

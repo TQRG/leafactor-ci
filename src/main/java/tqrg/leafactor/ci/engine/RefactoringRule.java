@@ -16,11 +16,12 @@ import java.util.stream.Stream;
 /**
  * Refactoring rule interface
  */
-public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iteration, CaseDetector, CaseTransformer, CaseProcessor {
+public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iterable, CaseDetector, CaseTransformer, CaseProcessor {
 
     /**
      * Finds a element of interest
-     * @param root The baseline element
+     *
+     * @param root                  The baseline element
      * @param isCtElementOfInterest A predicate that identifies the interested element
      * @return True if the element of interest was found in the tree, false otherwise
      */
@@ -32,7 +33,8 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
 
     /**
      * Finds a element of interest
-     * @param root The baseline element
+     *
+     * @param root                The baseline element
      * @param isElementOfInterest A predicate that identifies the interested element
      * @return True if the element of interest was found in the tree, false otherwise
      */
@@ -46,12 +48,13 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
 
     /**
      * Finds a element of interest with filter
-     * @param root The baseline element
+     *
+     * @param root                The baseline element
      * @param isElementOfInterest A predicate that identifies the interested element
      * @return True if the element of interest was found in the tree, false otherwise
      */
     static <T> List<T> getCtElementsOfInterestWithFilter(CtElement root, Predicate<CtElement> isElementOfInterest, Predicate<CtElement> filter, Class<T> type) {
-        if(filter.test(root)) {
+        if (filter.test(root)) {
             return new ArrayList<T>();
         }
         Stream<T> a = isElementOfInterest.test(root) ? Stream.of(type.cast(root)) : Stream.empty();
@@ -63,15 +66,16 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
 
     /**
      * The closest T by bubbling up
+     *
      * @param element The element from which to start
      * @return The closest T by bubbling up
      */
     static <T> T getClosestTypeParent(CtElement element, Class<T> type, List<CtElement> stopAt) {
         CtElement root = element.getParent();
-        while (root != null  && !(type.isInstance(root)) && !stopAt.contains(root)) {
+        while (root != null && !(type.isInstance(root)) && !stopAt.contains(root)) {
             root = root.getParent();
         }
-        if(root == null || stopAt.contains(root)) {
+        if (root == null || stopAt.contains(root)) {
             return null;
         }
         return type.cast(root);
@@ -79,50 +83,53 @@ public interface RefactoringRule<E extends CtElement> extends Processor<E>, Iter
 
     /**
      * The closest CtBlock by bubbling up
+     *
      * @param element The element from which to start
      * @return The closest CtBlock by bubbling up
      */
     static CtBlock getClosestBlockParent(CtElement element) {
         CtElement root = element.getParent();
-        while (root != null  && !(root instanceof CtBlock)) {
+        while (root != null && !(root instanceof CtBlock)) {
             root = root.getParent();
         }
-        if(root == null) {
+        if (root == null) {
             return null;
         }
-        return (CtBlock)root;
+        return (CtBlock) root;
     }
 
     /**
      * The closest CtClass by bubbling up
+     *
      * @param element The element from which to start
      * @return The closest CtClass by bubbling up
      */
     static CtClass getClosestClassParent(CtElement element) {
         CtElement root = element.getParent();
-        while (root != null  && !(root instanceof CtClass)) {
+        while (root != null && !(root instanceof CtClass)) {
             root = root.getParent();
         }
-        if(root == null) {
+        if (root == null) {
             return null;
         }
-        return (CtClass)root;
+        return (CtClass) root;
     }
 
     /**
      * The closest Method by bubbling up
+     *
      * @param element The element from which to start
      * @return The closest MethodDeclaration by bubbling up
      */
     static CtMethod getClosestMethodParent(CtElement element) {
         CtElement root = element.getParent();
-        while (root != null  && !(root instanceof CtMethod)) {
+        while (root != null && !(root instanceof CtMethod)) {
             root = root.getParent();
         }
-        if(root == null) {
+        if (root == null) {
             return null;
         }
-        return (CtMethod)root;
+        return (CtMethod) root;
     }
 }
 

@@ -25,11 +25,11 @@ public class ConvertViewReassignInflator extends CaseOfInterest {
         if (!(context.statement instanceof CtAssignment)) {
             return null;
         }
-        CtAssignment assignment = (CtAssignment)context.statement;
+        CtAssignment assignment = (CtAssignment) context.statement;
         CtExpression assignedExpression = assignment.getAssigned();
         CtExpression assignmentExpression = assignment.getAssignment();
 
-        if(!(assignmentExpression instanceof CtInvocation)) {
+        if (!(assignmentExpression instanceof CtInvocation)) {
             return null;
         }
         CtInvocation invocation = (CtInvocation) assignmentExpression;

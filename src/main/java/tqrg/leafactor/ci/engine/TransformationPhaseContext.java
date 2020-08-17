@@ -24,7 +24,7 @@ public class TransformationPhaseContext {
      * Accepts the case for the transformation phase
      */
     public void accept(CaseOfInterest caseOfInterest) {
-        if(!transformedCaseOfInterestList.contains(caseOfInterest)) {
+        if (!transformedCaseOfInterestList.contains(caseOfInterest)) {
             transformedCaseOfInterestList.add(caseOfInterest);
         }
     }

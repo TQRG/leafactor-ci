@@ -51,14 +51,14 @@ public class ObjectAllocation extends CaseOfInterest {
     public static ObjectAllocation detect(DetectionPhaseContext context) {
         CtExpression assignmentExpression;
         CtVariableReference variableReference;
-        if(context.statement instanceof CtVariable) {
-            assignmentExpression = ((CtVariable)context.statement).getDefaultExpression();
-            variableReference = ((CtVariable)context.statement).getReference();
+        if (context.statement instanceof CtVariable) {
+            assignmentExpression = ((CtVariable) context.statement).getDefaultExpression();
+            variableReference = ((CtVariable) context.statement).getReference();
         } else if (context.statement instanceof CtAssignment) {
-            CtAssignment assignment = (CtAssignment)context.statement;
+            CtAssignment assignment = (CtAssignment) context.statement;
             assignmentExpression = assignment.getAssignment();
             CtExpression assignedExpression = assignment.getAssigned();
-            if(!(assignedExpression instanceof CtVariableWrite)) {
+            if (!(assignedExpression instanceof CtVariableWrite)) {
                 return null;
             }
             variableReference = ((CtVariableWrite) assignedExpression).getVariable();
@@ -67,7 +67,7 @@ public class ObjectAllocation extends CaseOfInterest {
         }
 
         CtConstructorCall constructorCall;
-        if(assignmentExpression instanceof CtConstructorCall) {
+        if (assignmentExpression instanceof CtConstructorCall) {
             constructorCall = (CtConstructorCall) assignmentExpression;
         } else {
             return null;
@@ -75,8 +75,8 @@ public class ObjectAllocation extends CaseOfInterest {
 
         // Remove allocation that depend on other variables
         List<CtExpression<?>> expressionList = constructorCall.getArguments();
-        for(CtExpression expression : expressionList) {
-            if(expression instanceof CtVariableRead) {
+        for (CtExpression expression : expressionList) {
+            if (expression instanceof CtVariableRead) {
                 return null;
             }
         }
