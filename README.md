@@ -17,6 +17,8 @@ Currently LeafactorCI is in Alpha and can refactor the following patterns:
 These patterns were shown to affect battery efficiency, see more in
 [Performance-based Guidelines for Energy Efficient Mobile Applications](https://luiscruz.github.io/papers/cruz2017performance.pdf).
 
+**If it is your first time trying LeafactorCI please fill in the [feedback questionnaire](https://forms.gle/S5dX4eu5jZt1FLtD8)**
+
 # Installation 
 
 In your android project go to the app/build.gradle and add the following:
