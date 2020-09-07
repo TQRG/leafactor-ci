@@ -21,7 +21,7 @@ These patterns were shown to affect battery efficiency, see more in
 
 # Installation 
 
-In your android project go to the app/build.gradle and add the following:
+In your android project go to the app/build.gradle and add the following (you can find the plugin version at the top of this page):
 ```
 plugins {
   id 'com.android.application'
