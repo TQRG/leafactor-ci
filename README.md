@@ -32,6 +32,19 @@ plugins {
 Where PLUGIN_VERSION is the version of the plugin you would like to use.
 Make sure that com.android.application plugin is applied first.
 
+If you encounter the following error:
+```
+Could not find com.android.tools.build:gradle:3.5.0.
+```
+Please add the google repository instruction at the top of the app/build.gradle file.
+```
+buildscript {
+    repositories {
+        google()
+    }
+}
+```
+
 # Usage
 
 Refactoring the app is very simple, just run the following command.
